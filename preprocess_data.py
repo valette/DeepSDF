@@ -48,7 +48,6 @@ def filter_classes(patterns, classes):
 def process_mesh(mesh_filepath, target_filepath, executable, additional_args):
     logging.info(mesh_filepath + " --> " + target_filepath)
     command = [executable, "-m", mesh_filepath, "-o", target_filepath] + additional_args
-
     subproc = subprocess.Popen(command, stdout=subprocess.DEVNULL)
     subproc.wait()
 
@@ -142,6 +141,12 @@ if __name__ == "__main__":
         help="If set, the script will produce mesh surface samples for evaluation. "
         + "Otherwise, the script will produce SDF samples for training.",
     )
+    arg_parser.add_argument(
+        "--preprocessMeshPath",
+        dest="preprocessMeshPath",
+        default="bin/PreprocessMesh",
+        help="path to PreprocessMesh executable",
+    )
 
     deep_sdf.add_common_args(arg_parser)
 
@@ -157,7 +162,7 @@ if __name__ == "__main__":
         subdir = ws.surface_samples_subdir
         extension = ".ply"
     else:
-        executable = os.path.join(deepsdf_dir, "bin/PreprocessMesh")
+        executable = os.path.join(deepsdf_dir, args.preprocessMeshPath)
         subdir = ws.sdf_samples_subdir
         extension = ".npz"
 

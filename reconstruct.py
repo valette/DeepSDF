@@ -31,13 +31,15 @@ def reconstruct(
         for param_group in optimizer.param_groups:
             param_group["lr"] = lr
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     decreased_by = 10
     adjust_lr_every = int(num_iterations / 2)
 
     if type(stat) == type(0.1):
-        latent = torch.ones(1, latent_size).normal_(mean=0, std=stat).cuda()
+        latent = torch.ones(1, latent_size).normal_(mean=0, std=stat).to(device)
     else:
-        latent = torch.normal(stat[0].detach(), stat[1].detach()).cuda()
+        latent = torch.normal(stat[0].detach(), stat[1].detach()).to(device)
 
     latent.requires_grad = True
 
@@ -51,7 +53,7 @@ def reconstruct(
         decoder.eval()
         sdf_data = deep_sdf.data.unpack_sdf_samples_from_ram(
             test_sdf, num_samples
-        ).cuda()
+        ).to(device)
         xyz = sdf_data[:, 0:3]
         sdf_gt = sdf_data[:, 3].unsqueeze(1)
 
@@ -63,7 +65,7 @@ def reconstruct(
 
         latent_inputs = latent.expand(num_samples, -1)
 
-        inputs = torch.cat([latent_inputs, xyz], 1).cuda()
+        inputs = torch.cat([latent_inputs, xyz], 1).to(device)
 
         pred_sdf = decoder(inputs)
 
@@ -142,8 +144,10 @@ if __name__ == "__main__":
 
     deep_sdf.configure_logging(args)
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     def empirical_stat(latent_vecs, indices):
-        lat_mat = torch.zeros(0).cuda()
+        lat_mat = torch.zeros(0).to(device)
         for ind in indices:
             lat_mat = torch.cat([lat_mat, latent_vecs[ind]], 0)
         mean = torch.mean(lat_mat, 0)
@@ -171,12 +175,13 @@ if __name__ == "__main__":
         os.path.join(
             args.experiment_directory, ws.model_params_subdir, args.checkpoint + ".pth"
         )
+        , map_location=torch.device(device)
     )
     saved_model_epoch = saved_model_state["epoch"]
 
     decoder.load_state_dict(saved_model_state["model_state_dict"])
 
-    decoder = decoder.module.cuda()
+    decoder = decoder.module.to( device )
 
     with open(args.split_filename, "r") as f:
         split = json.load(f)

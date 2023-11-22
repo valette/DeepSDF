@@ -30,4 +30,4 @@ for f in os.listdir( args.directory ) :
 
 
 end = time.time()
-print( "Done in ", int( end - start) , "seconts" )
+print( "Done in ", int( end - start) , "seconds" )

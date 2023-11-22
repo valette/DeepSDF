@@ -29,10 +29,11 @@ names = []
 for f in os.listdir( path ) :
     meshFile = os.path.join( path, f, f + ".stl" )
     if not os.path.isfile( meshFile ) : continue
-    print( meshFile )
+#    print( meshFile )
     names.append( f )
 
 random.shuffle( names )
+print( "Total : ", len( names ), "items" )
 
 trainSize = math.floor( args.trainRatio * len( names ) )
 s = [ "train", "test" ]
@@ -43,9 +44,10 @@ for i in range( 2 ):
     obj = {}
     obj[ name ] = {}
     obj[ name ][ name2 ] = arrays[ i ]
-    print( obj )
+#    print( obj )
     fileName = name + "_" + name2 + "_" + s[ i ] + ".json"
     print( fileName )
+    print( len( arrays[ i ] ), "items" )
     txt = json.dumps(obj, indent=4)
     with open( fileName, "w") as outfile : outfile.write( txt )
 

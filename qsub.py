@@ -17,8 +17,8 @@ parser.add_argument( "-s", "--specs",  dest = 'specs', help = "specs file", requ
 parser.add_argument( "-c", "--config", metavar=('parameter', 'value'), action='append', nargs=2, help = "specs parameters", default = [] )
 
 args = parser.parse_args()
-pythonExec = "train_deep_sdf.py"
-trainExec = os.path.join( gitDir, pythonExec )
+trainExec = os.path.join( gitDir, "train_deep_sdf.py" )
+reconstructExec = os.path.join( gitDir, "reconstruct.py" )
 job = ""
 jobRoot = join( homeDir, name )
 maxJobId = 0
@@ -34,18 +34,18 @@ jobId = str( maxJobId + 1 )
 jobPath = join( jobRoot, jobId )
 
 with open( args.specs, 'r' ) as openfile: 
-	config = json.load( openfile )
+	specs = json.load( openfile )
 
 for key, value in args.config:
-	if not key in config:
+	if not key in specs:
 		print( "Error! : " + key + " is not a spec config key" )
 		exit( 1 )
-	if not isinstance( config[ key ], str ) :
+	if not isinstance( specs[ key ], str ) :
 		value = json.loads( value )
-	config[ key ] = value
+	specs[ key ] = value
 
 print( "specs.json:" )
-specsTxt = json.dumps( config, indent = 4 )
+specsTxt = json.dumps( specs, indent = 4 )
 print( specsTxt )
 
 def add( line ) :
@@ -68,6 +68,7 @@ add( "source /home/valette/anaconda3/etc/profile.d/conda.sh" )
 add( "conda activate DeepSDF" )
 add( "cd " + jobPath )
 add( "python " + trainExec + " -e ./" )
+add( "python" + reconstructExec + " -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TestSplit" ] )
 
 print( "job.pbs : " )
 print( job )

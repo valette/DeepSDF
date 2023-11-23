@@ -66,8 +66,10 @@ def read_sdf_samples_into_ram(filename):
     npz = np.load(filename)
     pos_tensor = torch.from_numpy(npz["pos"])
     neg_tensor = torch.from_numpy(npz["neg"])
-
-    return [pos_tensor, neg_tensor]
+    arr = [pos_tensor, neg_tensor]
+    if "scale" in npz : arr.append(torch.from_numpy(npz["scale"]))
+    if "offset" in npz : arr.append(torch.from_numpy(npz["offset"]))
+    return arr
 
 
 def unpack_sdf_samples(filename, subsample=None):

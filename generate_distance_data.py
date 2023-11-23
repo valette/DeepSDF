@@ -50,6 +50,7 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
     sigma1 = math.sqrt( variance )
     sigma2 = math.sqrt( secondVariance )
     sArea = 0
+    print( "Sigma1 :", sigma1, "Sigma2 :", sigma2 )
 
     for i in range( nCells ): sArea += mesh.GetCell( i ).ComputeArea()
 
@@ -101,13 +102,12 @@ def main( args ):
     variance = args.variance
     numberOfSamples = args.numberOfSamples
     nearSurfaceSamplingRatio = 47.0 / 50.0
-    secondVariance = variance / 10
 
     if args.test :
-        variance = 0.05
-        secondVariance = variance / 100
-        nearSurfaceSamplingRatio = 45.0 / 50.0
+        variance = variance / 10
+#        nearSurfaceSamplingRatio = 45.0 / 50.0
 
+    secondVariance = variance / 10
     bounds = mesh.GetBounds()
     print( "Initial mesh bounds: ", bounds )
     box = vtkBoundingBox()
@@ -137,7 +137,13 @@ def main( args ):
     addRandomPoints( mesh, points, numberOfSamples - points.GetNumberOfPoints() )
 
     print( str( points.GetNumberOfPoints() ) + " samples in total " )
+    box = vtkBoundingBox()
+    for i in range( points.GetNumberOfPoints() ):
+        box.AddPoint( points.GetPoint( i ) )
 
+    bounds = [ 0, 0, 0, 0, 0, 0 ]
+    box.GetBounds(bounds)
+    print( "Sample bounds : ", bounds )
     implicitPolyDataDistance = vtkImplicitPolyDataDistance()
     implicitPolyDataDistance.SetInput( mesh )
     signedDistances = vtkFloatArray()
@@ -154,12 +160,6 @@ def main( args ):
 
 def writeSDFToNPZ( points, sdf, filename, scale, offset ):
 
-    box = vtkBoundingBox()
-    for i in range( points.GetNumberOfPoints() ):
-        box.AddPoint( points.GetPoint( i ) )
-
-    center = [ 0, 0, 0 ]
-    box.GetCenter( center )
     pos = []
     neg = []
 
@@ -167,15 +167,15 @@ def writeSDFToNPZ( points, sdf, filename, scale, offset ):
         p = points.GetPoint( i )
         s = sdf.GetValue( i )
         sample = []
-        for j in range( 3 ):
-            coord = ( p[ j ] - center[ j ] ) * scale
-            sample.append( coord );
-        sample.append(s * scale);
+        for j in range( 3 ): sample.append( p[ j ] );
+        sample.append(s);
         arr = pos if s > 0 else neg
         arr.append( sample )
 
     pos = np.array( pos, dtype=np.float32 )
     neg = np.array( neg, dtype=np.float32 )
+    scale = np.array( scale, dtype=np.float32 )
+    offset = np.array( offset, dtype=np.float32 )
     np.savez( filename, pos = pos, neg = neg, scale = scale, offset = offset )
 
 def display( mesh, points, signedDistances ):
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     parser.add_argument( "-d", dest= "display", help="display result", action="store_true" )
     parser.add_argument( "-n", dest= "numberOfSamples", help="number of samples", type= int, default = 500000 )
     parser.add_argument( "-r", dest= "dilation", help="dilation ratio unit box", type= float, default = 0.05 )
-    parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.005 )
+    parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.0025 )
     parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
     parser.add_argument( "-m", dest = 'mesh', help = 'input mesh', required = True )

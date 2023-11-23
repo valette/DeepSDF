@@ -120,6 +120,14 @@ if __name__ == "__main__":
         help="The data source directory.",
     )
     arg_parser.add_argument(
+        "--resolution",
+        "-r",
+        dest="resolution",
+        type=int,
+        default=256,
+        help="The reconstruction resolution.",
+    )
+    arg_parser.add_argument(
         "--split",
         "-s",
         dest="split_filename",
@@ -224,7 +232,6 @@ if __name__ == "__main__":
         full_filename = os.path.join(args.data_source, ws.sdf_samples_subdir, npz)
 
         logging.debug("loading {}".format(npz))
-
         data_sdf = deep_sdf.data.read_sdf_samples_into_ram(full_filename)
 
         for k in range(repeat):
@@ -275,6 +282,11 @@ if __name__ == "__main__":
 
             decoder.eval()
 
+            scale = None
+            if len(data_sdf) > 2 : scale=data_sdf[2]
+            offset = None
+            if len(data_sdf) > 3 : offset=data_sdf[3]
+
             if not os.path.exists(os.path.dirname(mesh_filename)):
                 os.makedirs(os.path.dirname(mesh_filename))
 
@@ -282,7 +294,7 @@ if __name__ == "__main__":
                 start = time.time()
                 with torch.no_grad():
                     deep_sdf.mesh.create_mesh(
-                        decoder, latent, mesh_filename, N=256, max_batch=int(2 ** 18)
+                        decoder, latent, mesh_filename, N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale
                     )
                 logging.debug("total time: {}".format(time.time() - start))
 

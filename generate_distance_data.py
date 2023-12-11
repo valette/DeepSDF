@@ -2,25 +2,11 @@
 
 import argparse
 import math
-import random
 import numpy as np
 from pointsViewer import display
-from vtkmodules.vtkCommonCore import (
-    vtkFloatArray,
-    vtkPoints
-)
-from vtkmodules.vtkCommonDataModel import ( 
-vtkPolyData,
-vtkBoundingBox
-)
-from vtkmodules.vtkFiltersCore import (
-vtkImplicitPolyDataDistance
-)
-from vtkmodules.vtkFiltersGeneral import(
- vtkDistancePolyDataFilter
-)
-from vtkmodules.vtkIOGeometry import vtkSTLReader
+import random
 import time
+import vtk
 
 def addRandomPoints( mesh, points, numberOfPoints ):
 
@@ -81,7 +67,7 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
 def main( args ):
     start = time.time()
     random.seed( args.seed )
-    reader = vtkSTLReader()
+    reader = vtk.vtkSTLReader()
     reader.SetFileName( args.mesh )
     reader.Update()
     mesh = reader.GetOutput()
@@ -96,7 +82,7 @@ def main( args ):
     secondVariance = variance / 10
     bounds = mesh.GetBounds()
     print( "Initial mesh bounds: ", bounds )
-    box = vtkBoundingBox()
+    box = vtk.vtkBoundingBox()
     box.SetBounds( bounds )
     maxPoint = box.GetMaxPoint();
     minPoint = box.GetMinPoint();
@@ -115,7 +101,7 @@ def main( args ):
     meshPoints.Modified()
     print( "Final mesh bounds: ", mesh.GetBounds() )
 
-    points = vtkPoints()
+    points = vtk.vtkPoints()
 
     numberOfNearSurfacePoints = math.floor( 0.5 + nearSurfaceSamplingRatio * numberOfSamples )
     print( numberOfNearSurfacePoints, "near surface samples" )
@@ -123,16 +109,16 @@ def main( args ):
     addRandomPoints( mesh, points, numberOfSamples - points.GetNumberOfPoints() )
 
     print( str( points.GetNumberOfPoints() ) + " samples in total " )
-    box = vtkBoundingBox()
+    box = vtk.vtkBoundingBox()
     for i in range( points.GetNumberOfPoints() ):
         box.AddPoint( points.GetPoint( i ) )
 
     bounds = [ 0, 0, 0, 0, 0, 0 ]
     box.GetBounds(bounds)
     print( "Sample bounds : ", bounds )
-    implicitPolyDataDistance = vtkImplicitPolyDataDistance()
+    implicitPolyDataDistance = vtk.vtkImplicitPolyDataDistance()
     implicitPolyDataDistance.SetInput( mesh )
-    signedDistances = vtkFloatArray()
+    signedDistances = vtk.vtkFloatArray()
 
     for pointId in range(points.GetNumberOfPoints()):
         p = points.GetPoint(pointId)

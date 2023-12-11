@@ -25,7 +25,7 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
 
     items = list( range( nCells ) )
     weights = list( map( lambda i : mesh.GetCell( i ).ComputeArea(), items ) )
-    samples = random.choices( items, weights=weights, k = math.floor( numberOfPoints / 3 ) )
+    samples = random.choices( items, weights=weights, k = math.floor( numberOfPoints / 2 ) )
 
     n = [ 0, 0, 0 ]
     v = [ 0, 0, 0 ]

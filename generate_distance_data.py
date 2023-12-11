@@ -4,11 +4,7 @@ import argparse
 import math
 import random
 import numpy as np
-# noinspection PyUnresolvedReferences
-import vtkmodules.vtkInteractionStyle
-# noinspection PyUnresolvedReferences
-import vtkmodules.vtkRenderingOpenGL2
-from vtkmodules.vtkCommonColor import vtkNamedColors
+from pointsViewer import display
 from vtkmodules.vtkCommonCore import (
     vtkFloatArray,
     vtkPoints
@@ -19,19 +15,9 @@ vtkBoundingBox
 )
 from vtkmodules.vtkFiltersCore import (
 vtkImplicitPolyDataDistance
-
 )
 from vtkmodules.vtkFiltersGeneral import(
- vtkVertexGlyphFilter,
  vtkDistancePolyDataFilter
-)
-from vtkmodules.vtkFiltersSources import vtkSphereSource
-from vtkmodules.vtkRenderingCore import (
-    vtkActor,
-    vtkPolyDataMapper,
-    vtkRenderWindow,
-    vtkRenderWindowInteractor,
-    vtkRenderer
 )
 from vtkmodules.vtkIOGeometry import vtkSTLReader
 import time
@@ -58,7 +44,7 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
         cell = mesh.GetCell( i )
         ids = cell.GetPointIds()
         area = cell.ComputeArea()
-        nPoints = math.floor( 0.5 + 0.5 * numberOfPoints * area / sArea );
+        nPoints = math.ceil( 0.5 * numberOfPoints * area / sArea );
         p1 = meshPoints.GetPoint( ids.GetId( 0 ) )
         p2 = meshPoints.GetPoint( ids.GetId( 1 ) )
         p3 = meshPoints.GetPoint( ids.GetId( 2 ) )
@@ -69,13 +55,13 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
         cell.ComputeNormal( p1, p2, p3, n )
 
         for j in range( nPoints ) :
-            ok =  False
-            while not ok:
-                x1 = random.random()
-                x2 = random.random()
-                if x1 + x2 <= 1.0 : ok = True
+            rnd1 = math.sqrt( random.random() )
+            rnd2 = random.random()
 
-            x3 = 1 - x1 - x2;
+            x1  = 1 - rnd1
+            x2 = rnd1 * ( 1 - rnd2 )
+            x3 = rnd2 * rnd1;
+
             r1 = random.gauss( 0.0, sigma1 )
             r2 = random.gauss( 0.0, sigma2 )
 
@@ -156,7 +142,7 @@ def main( args ):
     end = time.time()
     print( "Done in ", int( end - start) , "seconts" )
     if args.output : writeSDFToNPZ( points, signedDistances, args.output, scale, offset )
-    if args.display : display( mesh, points, signedDistances )
+    if args.display : display( points, signedDistances, mesh )
 
 def writeSDFToNPZ( points, sdf, filename, scale, offset ):
 
@@ -177,47 +163,6 @@ def writeSDFToNPZ( points, sdf, filename, scale, offset ):
     scale = np.array( scale, dtype=np.float32 )
     offset = np.array( offset, dtype=np.float32 )
     np.savez( filename, pos = pos, neg = neg, scale = scale, offset = offset )
-
-def display( mesh, points, signedDistances ):
-
-    mapper = vtkPolyDataMapper()
-    mapper.SetInputData( mesh )
-    mapper.ScalarVisibilityOff()
-
-    actor = vtkActor()
-    actor.SetMapper(mapper)
-    actor.GetProperty().SetOpacity(0.3)
-    actor.GetProperty().SetColor(1, 0, 0)
-
-    polyData = vtkPolyData()
-    polyData.SetPoints(points)
-    polyData.GetPointData().SetScalars(signedDistances)
-
-    vertexGlyphFilter = vtkVertexGlyphFilter()
-    vertexGlyphFilter.SetInputData(polyData)
-    vertexGlyphFilter.Update()
-
-    signedDistanceMapper = vtkPolyDataMapper()
-    signedDistanceMapper.SetInputConnection(vertexGlyphFilter.GetOutputPort())
-    signedDistanceMapper.ScalarVisibilityOn()
-
-    signedDistanceActor = vtkActor()
-    signedDistanceActor.SetMapper(signedDistanceMapper)
-
-    renderer = vtkRenderer()
-#    renderer.AddViewProp(actor)
-    renderer.AddViewProp(signedDistanceActor)
-    colors = vtkNamedColors()
-
-    renderWindow = vtkRenderWindow()
-    renderWindow.AddRenderer(renderer)
-    renderWindow.SetWindowName('Distance cloud')
-
-    renWinInteractor = vtkRenderWindowInteractor()
-    renWinInteractor.SetRenderWindow(renderWindow)
-
-    renderWindow.Render()
-    renWinInteractor.Start()
 
 
 if __name__ == '__main__':

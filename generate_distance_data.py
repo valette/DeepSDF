@@ -21,48 +21,48 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
     meshPoints = mesh.GetPoints()
     sigma1 = math.sqrt( variance )
     sigma2 = math.sqrt( secondVariance )
-    sArea = 0
     print( "Sigma1 :", sigma1, "Sigma2 :", sigma2 )
 
-    for i in range( nCells ): sArea += mesh.GetCell( i ).ComputeArea()
+    items = list( range( nCells ) )
+    weights = list( map( lambda i : mesh.GetCell( i ).ComputeArea(), items ) )
+    samples = random.choices( items, weights=weights, k = math.floor( numberOfPoints / 3 ) )
 
-    for i in range( nCells ):
-        cell = mesh.GetCell( i )
+    n = [ 0, 0, 0 ]
+    v = [ 0, 0, 0 ]
+    v2 = [ 0, 0, 0 ]
+    v3 = [ 0, 0, 0 ]
+
+    for item in samples:
+        cell = mesh.GetCell( item )
         ids = cell.GetPointIds()
         area = cell.ComputeArea()
-        nPoints = math.ceil( 0.5 * numberOfPoints * area / sArea );
         p1 = meshPoints.GetPoint( ids.GetId( 0 ) )
         p2 = meshPoints.GetPoint( ids.GetId( 1 ) )
         p3 = meshPoints.GetPoint( ids.GetId( 2 ) )
-        n = [ 0, 0, 0 ]
-        v = [ 0, 0, 0 ]
-        v2 = [ 0, 0, 0 ]
-        v3 = [ 0, 0, 0 ]
         cell.ComputeNormal( p1, p2, p3, n )
 
-        for j in range( nPoints ) :
-            rnd1 = math.sqrt( random.random() )
-            rnd2 = random.random()
+        rnd1 = math.sqrt( random.random() )
+        rnd2 = random.random()
 
-            x1  = 1 - rnd1
-            x2 = rnd1 * ( 1 - rnd2 )
-            x3 = rnd2 * rnd1;
+        x1  = 1 - rnd1
+        x2 = rnd1 * ( 1 - rnd2 )
+        x3 = rnd2 * rnd1;
 
-            r1 = random.gauss( 0.0, sigma1 )
-            r2 = random.gauss( 0.0, sigma2 )
+        r1 = random.gauss( 0.0, sigma1 )
+        r2 = random.gauss( 0.0, sigma2 )
 
-            for k in range( 3 ):
-                v[k] = p1[k] * x1 + p2[k] * x2 + p3[k] * x3;
-                if useNormals:
-                    v2[k] = v[ k ] + r1 * n[ k ]
-                    v3[k] = v[ k ] + r2 * n[ k ]
-                else:
-                    v2[k] = v[ k ] + random.gauss( 0.0, sigma1 )
-                    v3[k] = v[ k ] + random.gauss( 0.0, sigma2 )
+        for k in range( 3 ):
+            v[k] = p1[k] * x1 + p2[k] * x2 + p3[k] * x3;
+            if useNormals:
+                v2[k] = v[ k ] + r1 * n[ k ]
+                v3[k] = v[ k ] + r2 * n[ k ]
+            else:
+                v2[k] = v[ k ] + random.gauss( 0.0, sigma1 )
+                v3[k] = v[ k ] + random.gauss( 0.0, sigma2 )
 
 #            points.InsertNextPoint( v[ 0 ], v[ 1 ], v[ 2 ] )
-            points.InsertNextPoint( v2[ 0 ], v2[ 1 ], v2[ 2 ] )
-            points.InsertNextPoint( v2[ 0 ], v2[ 1 ], v2[ 2 ] )
+        points.InsertNextPoint( v2[ 0 ], v2[ 1 ], v2[ 2 ] )
+        points.InsertNextPoint( v3[ 0 ], v3[ 1 ], v3[ 2 ] )
 
 def main( args ):
     start = time.time()
@@ -104,11 +104,11 @@ def main( args ):
     points = vtk.vtkPoints()
 
     numberOfNearSurfacePoints = math.floor( 0.5 + nearSurfaceSamplingRatio * numberOfSamples )
-    print( numberOfNearSurfacePoints, "near surface samples" )
     addSurfacePoints( mesh, points, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
+    print( points.GetNumberOfPoints(), "near surface samples" )
     addRandomPoints( mesh, points, numberOfSamples - points.GetNumberOfPoints() )
 
-    print( str( points.GetNumberOfPoints() ) + " samples in total " )
+    print( points.GetNumberOfPoints(), "samples in total " )
     box = vtk.vtkBoundingBox()
     for i in range( points.GetNumberOfPoints() ):
         box.AddPoint( points.GetPoint( i ) )
@@ -126,7 +126,7 @@ def main( args ):
         signedDistances.InsertNextValue(signedDistance)
 
     end = time.time()
-    print( "Done in ", int( end - start) , "seconts" )
+    print( "Done in ", int( end - start) , "seconds" )
     if args.output : writeSDFToNPZ( points, signedDistances, args.output, scale, offset )
     if args.display : display( points, signedDistances, mesh )
 

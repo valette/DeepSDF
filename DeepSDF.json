@@ -20,6 +20,16 @@
 					"prefix" : "-n "
 				},
 				{
+					"name" : "nearSurfaceSamplingRatio",
+					"type" : "float",
+					"prefix" : "--near "
+				},
+				{
+					"name" : "yMin",
+					"type" : "float",
+					"prefix" : "--ymin "
+				},
+				{
 					"name" : "testing",
 					"type" : "flag",
 					"prefix" : "-t "
@@ -29,6 +39,34 @@
 				}
 			],
 			"executable" : "generate_distance_data.py",
+			"engine" : "python3"
+		},
+		"DeepSDFReconstruction" : {
+			"parameters" : [
+				{
+					"name" : "inputDistances",
+					"type" : "file",
+					"prefix" : "-z ",
+					"required" : true
+				},
+				{
+					"name" : "experiment",
+					"type" : "directory",
+					"prefix" : "-e ",
+					"required" : "true"
+				},
+				{
+					"name" : "resolution",
+					"type" : "int",
+					"prefix" : "-r "
+				},
+				{
+					"name" : "iterations",
+					"type" : "int",
+					"prefix" : "--iters "
+				}
+			],
+			"executable" : "reconstructSingle.py",
 			"engine" : "python3"
 		}
 	}

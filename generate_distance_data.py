@@ -73,11 +73,9 @@ def main( args ):
     mesh = reader.GetOutput()
     variance = args.variance
     numberOfSamples = args.numberOfSamples
-    nearSurfaceSamplingRatio = 47.0 / 50.0
 
     if args.test :
         variance = variance / 10
-#        nearSurfaceSamplingRatio = 45.0 / 50.0
 
     secondVariance = variance / 10
     bounds = mesh.GetBounds()
@@ -103,7 +101,7 @@ def main( args ):
 
     points = vtk.vtkPoints()
 
-    numberOfNearSurfacePoints = math.floor( 0.5 + nearSurfaceSamplingRatio * numberOfSamples )
+    numberOfNearSurfacePoints = math.floor( 0.5 + args.nearRatio * numberOfSamples )
     addSurfacePoints( mesh, points, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
     print( points.GetNumberOfPoints(), "near surface samples" )
     addRandomPoints( mesh, points, numberOfSamples - points.GetNumberOfPoints() )
@@ -127,16 +125,17 @@ def main( args ):
 
     end = time.time()
     print( "Done in ", int( end - start) , "seconds" )
-    if args.output : writeSDFToNPZ( points, signedDistances, args.output, scale, offset )
+    if args.output : writeSDFToNPZ( points, signedDistances, args.output, scale, offset, args.yMin )
     if args.display : display( points, signedDistances, mesh )
 
-def writeSDFToNPZ( points, sdf, filename, scale, offset ):
+def writeSDFToNPZ( points, sdf, filename, scale, offset, yMin = -100000 ):
 
     pos = []
     neg = []
 
     for i in range( points.GetNumberOfPoints() ):
         p = points.GetPoint( i )
+        if p[ 1 ] < yMin : continue
         s = sdf.GetValue( i )
         sample = []
         for j in range( 3 ): sample.append( p[ j ] );
@@ -155,6 +154,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
     parser.add_argument( "-d", dest= "display", help="display result", action="store_true" )
     parser.add_argument( "-n", dest= "numberOfSamples", help="number of samples", type= int, default = 500000 )
+    parser.add_argument( "--near", dest= "nearRatio", help="near surface sampling ratio", type = float, default = 47.0 / 50.0 )
     parser.add_argument( "-r", dest= "dilation", help="dilation ratio unit box", type= float, default = 0.05 )
     parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.0025 )
     parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
@@ -162,5 +162,6 @@ if __name__ == '__main__':
     parser.add_argument( "-m", dest = 'mesh', help = 'input mesh', required = True )
     parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
     parser.add_argument( "-t", dest = 'test', help = 'use tighter sampling for test', action="store_true"  )
+    parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )
     args = parser.parse_args()
     main( args )

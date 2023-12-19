@@ -10,19 +10,13 @@ start = time.time()
 parser = argparse.ArgumentParser( description = 'Generate split files', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
 parser.add_argument( dest= "directory", help="directory containing meshes" )
 parser.add_argument( "-r", dest= "trainRatio", help="ratio of training data", type= float, default = 0.9 )
-# parser.add_argument( "-ns", dest= "numberOfSurfacePoints", help="number of surface points", type= float, default = 1000 )
-# parser.add_argument( "-r", dest= "dilation", help="dilation around box", type= float, default = 1 )
-# parser.add_argument( "-sigma", dest= "sigma", help="noise amplitude around surface", type= float, default = 0.5 )
-# parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
-# parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
-# parser.add_argument( dest = 'mesh', help = 'input mesh' )
 args = parser.parse_args()
 
 
 path = os.path.normpath( args.directory )
 arr = path.split( "/" )
-name = arr[ 0 ]
-name2 = arr[ 1 ]
+name = arr[ -2 ]
+name2 = arr[ -1 ]
 
 names = []
 

@@ -1,0 +1,35 @@
+{
+
+  "actions": {
+		"mesh2NPZ" : {
+			"parameters" : [
+				{
+					"name" : "inputMesh",
+					"type" : "file",
+					"prefix" : "-m ",
+					"required" : true
+				},
+				{
+					"name" : "variance",
+					"type" : "float",
+					"prefix" : "-v "
+				},
+				{
+					"name" : "numberOfSamples",
+					"type" : "int",
+					"prefix" : "-n "
+				},
+				{
+					"name" : "testing",
+					"type" : "flag",
+					"prefix" : "-t "
+				},
+				{
+					"text" : "-o distance.npz"
+				}
+			],
+			"executable" : "generate_distance_data.py",
+			"engine" : "python3"
+		}
+	}
+}

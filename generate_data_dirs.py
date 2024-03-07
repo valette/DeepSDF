@@ -18,16 +18,18 @@ args = parser.parse_args()
 
 if not os.path.exists( args.outputDir ) : os.makedirs( args.outputDir )
 
-for f in os.listdir( args.directory ) :
-    if not f.endswith( ".stl" ) : continue
-    arr = f.split( "." )
-    newDir = os.path.join( args.outputDir, "_".join( arr[ 0 ].split( " " ) ) )
-    if not os.path.exists( newDir ) : os.makedirs( newDir )
-    inputFile = os.path.join( args.directory, f )
-    outputFile = "_".join( os.path.join( newDir, f ).split( " " ) )
-    shutil.copyfile( inputFile, outputFile )
-    print( newDir )
-
+for root, dirs, files in os.walk( args.directory ):
+    for f in files:
+        if not f.endswith( ".stl" ) : continue
+        arr = f.split( "." )
+        #print(os.path.join(root, f))
+        newDir = os.path.join( args.outputDir, "_".join( arr[ 0 ].split( " " ) ) )
+        if not os.path.exists( newDir ) : os.makedirs( newDir )
+        inputFile = os.path.join( root, f )
+        outputFile = "_".join( os.path.join( newDir, f ).split( " " ) )
+        shutil.copyfile( inputFile, outputFile )
+        print( inputFile )
+        print( newDir )
 
 end = time.time()
 print( "Done in ", int( end - start) , "seconds" )

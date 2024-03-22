@@ -19,6 +19,7 @@ parser.add_argument( "-c", "--config", metavar=('parameter', 'value'), action='a
 args = parser.parse_args()
 trainExec = os.path.join( gitDir, "train_deep_sdf.py" )
 reconstructExec = os.path.join( gitDir, "reconstruct.py" )
+pth2csvExec = os.path.join( gitDir, "pth2csv.py" )
 job = ""
 jobRoot = join( homeDir, name )
 maxJobId = 0
@@ -69,6 +70,8 @@ add( "conda activate DeepSDF" )
 add( "cd " + jobPath )
 add( "python " + trainExec + " -e ./" )
 add( "python " + reconstructExec + " -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TestSplit" ] )
+add( "python " + reconstructExec + " --latent -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TrainSplit" ] )
+add( "python " + pth2csvExec + " Reconstructions CSV" )
 
 print( "job.pbs : " )
 print( job )

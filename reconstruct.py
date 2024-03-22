@@ -146,6 +146,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Skip meshes which have already been reconstructed.",
     )
+    arg_parser.add_argument(
+        "--latent",
+        dest="latent",
+        action="store_true",
+        default=False,
+        help="Only save latent codes.",
+    )
     deep_sdf.add_common_args(arg_parser)
 
     args = arg_parser.parse_args()
@@ -202,7 +209,6 @@ if __name__ == "__main__":
 
     err_sum = 0.0
     repeat = 1
-    save_latvec_only = False
     rerun = 0
 
     reconstruction_dir = os.path.join(
@@ -290,7 +296,7 @@ if __name__ == "__main__":
             if not os.path.exists(os.path.dirname(mesh_filename)):
                 os.makedirs(os.path.dirname(mesh_filename))
 
-            if not save_latvec_only:
+            if not args.latent:
                 start = time.time()
                 with torch.no_grad():
                     deep_sdf.mesh.create_mesh(

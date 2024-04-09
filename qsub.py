@@ -72,6 +72,7 @@ add( "python " + trainExec + " -e ./" )
 add( "python " + reconstructExec + " -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TestSplit" ] )
 add( "python " + reconstructExec + " --latent -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TrainSplit" ] )
 add( "python " + pth2csvExec + " Reconstructions CSV" )
+add( "zip -r csv.zip CSV" )
 
 print( "job.pbs : " )
 print( job )

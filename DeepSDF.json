@@ -10,6 +10,11 @@
 					"required" : true
 				},
 				{
+					"name" : "boxMesh",
+					"type" : "file",
+					"prefix" : "-b "
+				},
+				{
 					"name" : "variance",
 					"type" : "float",
 					"prefix" : "-v "

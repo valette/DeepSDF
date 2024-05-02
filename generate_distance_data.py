@@ -80,6 +80,14 @@ def main( args ):
     secondVariance = variance / 10
     bounds = mesh.GetBounds()
     print( "Initial mesh bounds: ", bounds )
+
+    if args.boxMesh:
+		reader2 = vtk.vtkSTLReader()
+		reader2.SetFileName( args.boxMesh )
+		reader2.Update()
+		bounds = reader2.GetOutput().GetBounds()
+		print( "Box mesh bounds: ", bounds )
+
     box = vtk.vtkBoundingBox()
     box.SetBounds( bounds )
     maxPoint = box.GetMaxPoint();
@@ -160,6 +168,7 @@ if __name__ == '__main__':
     parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
     parser.add_argument( "-m", dest = 'mesh', help = 'input mesh', required = True )
+    parser.add_argument( "-b", dest = 'boxMesh', help = 'input box mesh which will be used to compute bounding box' )
     parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
     parser.add_argument( "-t", dest = 'test', help = 'use tighter sampling for test', action="store_true"  )
     parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )

@@ -82,11 +82,11 @@ def main( args ):
     print( "Initial mesh bounds: ", bounds )
 
     if args.boxMesh:
-		reader2 = vtk.vtkSTLReader()
-		reader2.SetFileName( args.boxMesh )
-		reader2.Update()
-		bounds = reader2.GetOutput().GetBounds()
-		print( "Box mesh bounds: ", bounds )
+        reader2 = vtk.vtkSTLReader()
+        reader2.SetFileName( args.boxMesh )
+        reader2.Update()
+        bounds = reader2.GetOutput().GetBounds()
+        print( "Box mesh bounds: ", bounds )
 
     box = vtk.vtkBoundingBox()
     box.SetBounds( bounds )

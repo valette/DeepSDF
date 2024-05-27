@@ -64,15 +64,6 @@ if __name__ == "__main__":
     deep_sdf.configure_logging(args)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    def empirical_stat(latent_vecs, indices):
-        lat_mat = torch.zeros(0).to(device)
-        for ind in indices:
-            lat_mat = torch.cat([lat_mat, latent_vecs[ind]], 0)
-        mean = torch.mean(lat_mat, 0)
-        var = torch.var(lat_mat, 0)
-        return mean, var
-
     specs_filename = os.path.join(args.experiment_directory, "specs.json")
 
     if not os.path.isfile(specs_filename):
@@ -134,12 +125,10 @@ if __name__ == "__main__":
     if len(data_sdf) > 2 : scale=data_sdf[2]
     offset = None
     if len(data_sdf) > 3 : offset=data_sdf[3]
-    save_latvec_only = False
-    if not save_latvec_only:
-        start = time.time()
-        with torch.no_grad():
-            deep_sdf.mesh.create_mesh(
-                decoder, latent, "mesh", N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale
-            )
+    start = time.time()
+    with torch.no_grad():
+        deep_sdf.mesh.create_mesh(
+            decoder, latent, "mesh", N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale
+        )
     logging.debug("total time: {}".format(time.time() - start))
     torch.save(latent.unsqueeze(0), "code.pth")

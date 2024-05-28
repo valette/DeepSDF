@@ -13,15 +13,17 @@ generate_distance_data.add_args( sdf_parser )
 
 reconstruction_parser = parser.add_argument_group('Reconstruction options')
 reconstruct_single.add_args( reconstruction_parser )
+reconstruction_parser.add_argument( '--outputDir', help = 'Output directory', default = "./" )
 
 args = parser.parse_args()
 
 files = []
+if not os.path.exists( args.outputDir ) : os.mkdir( args.outputDir )
 
 if os.path.isdir( args.mesh ):
 	for file in os.listdir( args.mesh ) :
 		if not file.endswith( ".stl" ) : continue
-		files.append( [ os.path.join( args.mesh, file ), file[ : -4 ] ] )
+		files.append( [ os.path.join( args.mesh, file ), os.path.join( args.outputDir, file[ : -4 ] ) ] )
 else:
 	files.append( [ args.mesh, "mesh" ] )
 

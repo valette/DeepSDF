@@ -44,18 +44,11 @@ def add_args( arg_parser ):
         help="The number of iterations of latent code optimization to perform.",
     )
     arg_parser.add_argument(
-        "--output",
-        "-o",
-        dest="output",
-        default="mesh",
-        help="output mesh file name",
-    )
-    arg_parser.add_argument(
         "--cpu",
         action = "store_true",
         help="disable GPU",
     )
-    return arg_parser
+    deep_sdf.add_common_args(arg_parser)
 
 def init( args ):
     deep_sdf.configure_logging(args)
@@ -93,10 +86,9 @@ def init( args ):
     logging.debug(decoder)
     return specs, decoder
 
-def reconstruct_mesh( args, specs, decoder, data_sdf ):
+def reconstruct_mesh( name, args, specs, decoder, data_sdf ):
     data_sdf[0] = data_sdf[0][torch.randperm(data_sdf[0].shape[0])]
     data_sdf[1] = data_sdf[1][torch.randperm(data_sdf[1].shape[0])]
-
     start = time.time()
     err, latent = reconstruct(
         decoder,
@@ -110,6 +102,7 @@ def reconstruct_mesh( args, specs, decoder, data_sdf ):
         l2reg=True,
         args=args
     )
+    print("Latent code computation takes:",  time.time() - start)
     logging.debug("reconstruct time: {}".format(time.time() - start))
     logging.debug("error : {}".format(err))
     logging.debug("latent: {}".format(latent.detach().cpu().numpy()))
@@ -123,7 +116,7 @@ def reconstruct_mesh( args, specs, decoder, data_sdf ):
     start = time.time()
     with torch.no_grad():
         deep_sdf.mesh.create_mesh(
-            decoder, latent, args.output, N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale, args=args
+            decoder, latent, name, N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale, args=args
         )
     logging.debug("total time: {}".format(time.time() - start))
     torch.save(latent.unsqueeze(0), "code.pth")
@@ -142,10 +135,16 @@ if __name__ == "__main__":
         help="The npz file to reconstruct",
         required=True
     )
-    deep_sdf.add_common_args(arg_parser)
+    arg_parser.add_argument(
+        "--output",
+        "-o",
+        dest="output",
+        default="mesh",
+        help="output mesh file name",
+    )
     args = arg_parser.parse_args()
     specs, decoder = init(args)
     logging.debug("loading {}".format(args.npz))
     data_sdf = deep_sdf.data.read_sdf_samples_into_ram(args.npz)
-    reconstruct_mesh( args, specs, decoder, data_sdf )
+    reconstruct_mesh( args.output, args, specs, decoder, data_sdf )
 

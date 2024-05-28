@@ -139,16 +139,15 @@ def generate( args, mesh ):
     pos = np.array( pos, dtype=np.float32 )
     neg = np.array( neg, dtype=np.float32 )
     end = time.time()
-    print( "Done in ", int( end - start) , "seconds" )
+    print( "SDF values computed in", int( end - start) , "seconds" )
     if args.display : display( points, signedDistances, mesh )
     return pos, neg, scale, offset
 
-def getParser():
-    parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
+def add_args( parser ):
     parser.add_argument( "-d", dest= "display", help="display result", action="store_true" )
     parser.add_argument( "-n", dest= "numberOfSamples", help="number of samples", type= int, default = 500000 )
     parser.add_argument( "--near", dest= "nearRatio", help="near surface sampling ratio", type = float, default = 47.0 / 50.0 )
-    parser.add_argument( "-r", dest= "dilation", help="dilation ratio unit box", type= float, default = 0.05 )
+    parser.add_argument( "--dilation", help="dilation ratio unit box", type= float, default = 0.05 )
     parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.0025 )
     parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
@@ -156,11 +155,10 @@ def getParser():
     parser.add_argument( "-b", dest = 'boxMesh', help = 'input box mesh which will be used to compute bounding box' )
     parser.add_argument( "-t", dest = 'test', help = 'use tighter sampling for test', action="store_true"  )
     parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )
-    return parser
-
 
 if __name__ == '__main__':
-    parser = getParser()
+    parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
+    add_args( parser )
     parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
     args = parser.parse_args()
     reader = vtk.vtkSTLReader()

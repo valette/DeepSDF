@@ -51,7 +51,6 @@ def reconstruct(
     loss_l1 = torch.nn.L1Loss()
 
     for e in range(num_iterations):
-
         decoder.eval()
         sdf_data = deep_sdf.data.unpack_sdf_samples_from_ram(
             test_sdf, num_samples

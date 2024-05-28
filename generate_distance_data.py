@@ -64,13 +64,9 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
         points.InsertNextPoint( v2[ 0 ], v2[ 1 ], v2[ 2 ] )
         points.InsertNextPoint( v3[ 0 ], v3[ 1 ], v3[ 2 ] )
 
-def generate( args ):
+def generate( args, mesh ):
     start = time.time()
     random.seed( args.seed )
-    reader = vtk.vtkSTLReader()
-    reader.SetFileName( args.mesh )
-    reader.Update()
-    mesh = reader.GetOutput()
     variance = args.variance
     numberOfSamples = args.numberOfSamples
 
@@ -167,8 +163,12 @@ if __name__ == '__main__':
     parser = getParser()
     parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
     args = parser.parse_args()
-    pos, neg, scale, offset = generate( args )
+    reader = vtk.vtkSTLReader()
+    reader.SetFileName( args.mesh )
+    reader.Update()
+    mesh = reader.GetOutput()
+    pos, neg, scale, offset = generate( args, mesh )
     if args.output :
         scale = np.array( scale, dtype = np.float32 )
         offset = np.array( offset, dtype = np.float32 )
-        np.savez( filename, pos = pos, neg = neg, scale = scale, offset = offset )
+        np.savez( args.output, pos = pos, neg = neg, scale = scale, offset = offset )

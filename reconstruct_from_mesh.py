@@ -1,6 +1,7 @@
 import argparse
 import generate_distance_data
 import logging
+import os
 import reconstruct_single
 import torch
 import vtk
@@ -15,13 +16,25 @@ reconstruct_single.add_args( reconstruction_parser )
 
 args = parser.parse_args()
 
-reader = vtk.vtkSTLReader()
-reader.SetFileName( args.mesh )
-reader.Update()
-mesh = reader.GetOutput()
-pos, neg, scale, offset = generate_distance_data.generate( args, mesh )
-print( scale )
-print( offset )
-data_sdf = [ torch.Tensor(pos), torch.Tensor(neg), scale, offset ]
-specs, decoder = reconstruct_single.init(args)
-reconstruct_single.reconstruct_mesh( "mesh", args, specs, decoder, data_sdf )
+files = []
+
+if os.path.isdir( args.mesh ):
+	for file in os.listdir( args.mesh ) :
+		if not file.endswith( ".stl" ) : continue
+		files.append( [ os.path.join( args.mesh, file ), file[ : -4 ] ] )
+else:
+	files.append( [ args.mesh, "mesh" ] )
+
+for entry in files:
+	print( "******** Mesh :", entry[ 0 ] )
+	reader = vtk.vtkSTLReader()
+	reader.SetFileName( entry[ 0 ] )
+	reader.Update()
+	mesh = reader.GetOutput()
+	pos, neg, scale, offset = generate_distance_data.generate( args, mesh )
+	print( scale )
+	print( offset )
+	data_sdf = [ torch.Tensor(pos), torch.Tensor(neg), scale, offset ]
+	specs, decoder = reconstruct_single.init(args)
+	reconstruct_single.reconstruct_mesh( entry[ 1 ], args, specs, decoder, data_sdf )
+	print( "Saved to", entry[ 1 ] + ".ply" );

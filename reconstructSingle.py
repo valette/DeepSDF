@@ -9,16 +9,10 @@ import random
 import time
 import torch
 from reconstruct import reconstruct
-
 import deep_sdf
 import deep_sdf.workspace as ws
 
-
-def getParser():
-    arg_parser = argparse.ArgumentParser(
-        description="Use a trained DeepSDF decoder to reconstruct a shape given SDF "
-        + "samples."
-    )
+def add_args( arg_parser ):
     arg_parser.add_argument(
         "--experiment",
         "-e",
@@ -49,25 +43,24 @@ def getParser():
         default=800,
         help="The number of iterations of latent code optimization to perform.",
     )
+    arg_parser.add_argument(
+        "--output",
+        "-o",
+        dest="output",
+        default="mesh",
+        help="output mesh file name",
+    )
+    arg_parser.add_argument(
+        "--cpu",
+        action = "store_true",
+        help="disable GPU",
+    )
     return arg_parser
 
-if __name__ == "__main__":
-
-    arg_parser = getParser()
-    arg_parser.add_argument(
-        "--npz",
-        "-z",
-        dest="npz",
-        help="The npz file to reconstruct",
-        required=True
-    )
-    deep_sdf.add_common_args(arg_parser)
-
-    args = arg_parser.parse_args()
-
+def init( args ):
     deep_sdf.configure_logging(args)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if not args.cpu and torch.cuda.is_available() else 'cpu')
     specs_filename = os.path.join(args.experiment_directory, "specs.json")
 
     if not os.path.isfile(specs_filename):
@@ -98,12 +91,9 @@ if __name__ == "__main__":
     decoder = decoder.module.to( device )
 
     logging.debug(decoder)
+    return specs, decoder
 
-    err_sum = 0.0
-
-    logging.debug("loading {}".format(args.npz))
-    data_sdf = deep_sdf.data.read_sdf_samples_into_ram(args.npz)
-
+def reconstruct_mesh( args, specs, decoder, data_sdf ):
     data_sdf[0] = data_sdf[0][torch.randperm(data_sdf[0].shape[0])]
     data_sdf[1] = data_sdf[1][torch.randperm(data_sdf[1].shape[0])]
 
@@ -111,13 +101,14 @@ if __name__ == "__main__":
     err, latent = reconstruct(
         decoder,
         int(args.iterations),
-        latent_size,
+        specs["CodeLength"],
         data_sdf,
         0.01,  # [emp_mean,emp_var],
         0.1,
         num_samples=8000,
         lr=5e-3,
         l2reg=True,
+        args=args
     )
     logging.debug("reconstruct time: {}".format(time.time() - start))
     logging.debug("error : {}".format(err))
@@ -132,7 +123,29 @@ if __name__ == "__main__":
     start = time.time()
     with torch.no_grad():
         deep_sdf.mesh.create_mesh(
-            decoder, latent, "mesh", N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale
+            decoder, latent, args.output, N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale, args=args
         )
     logging.debug("total time: {}".format(time.time() - start))
     torch.save(latent.unsqueeze(0), "code.pth")
+
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(
+        description="Use a trained DeepSDF decoder to reconstruct a shape given SDF "
+        + "samples."
+    )
+    add_args( arg_parser )
+    arg_parser.add_argument(
+        "--npz",
+        "-z",
+        dest="npz",
+        help="The npz file to reconstruct",
+        required=True
+    )
+    deep_sdf.add_common_args(arg_parser)
+    args = arg_parser.parse_args()
+    specs, decoder = init(args)
+    logging.debug("loading {}".format(args.npz))
+    data_sdf = deep_sdf.data.read_sdf_samples_into_ram(args.npz)
+    reconstruct_mesh( args, specs, decoder, data_sdf )
+

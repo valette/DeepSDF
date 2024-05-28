@@ -23,6 +23,7 @@ def reconstruct(
     num_samples=30000,
     lr=5e-4,
     l2reg=False,
+    args=None
 ):
     def adjust_learning_rate(
         initial_lr, optimizer, num_iterations, decreased_by, adjust_lr_every
@@ -32,6 +33,7 @@ def reconstruct(
             param_group["lr"] = lr
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if args != None and args.cpu : device = 'cpu'
 
     decreased_by = 10
     adjust_lr_every = int(num_iterations / 2)

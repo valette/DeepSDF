@@ -12,11 +12,12 @@ import deep_sdf.utils
 
 
 def create_mesh(
-    decoder, latent_vec, filename, N=256, max_batch=32 ** 3, offset=None, scale=None
+    decoder, latent_vec, filename, N=256, max_batch=32 ** 3, offset=None, scale=None, args=None
 ):
     start = time.time()
     ply_filename = filename
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if args != None and args.cpu : device = 'cpu'
 
     decoder.eval()
 

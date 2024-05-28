@@ -64,7 +64,7 @@ def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, us
         points.InsertNextPoint( v2[ 0 ], v2[ 1 ], v2[ 2 ] )
         points.InsertNextPoint( v3[ 0 ], v3[ 1 ], v3[ 2 ] )
 
-def main( args ):
+def generate( args ):
     start = time.time()
     random.seed( args.seed )
     reader = vtk.vtkSTLReader()
@@ -126,39 +126,28 @@ def main( args ):
     implicitPolyDataDistance.SetInput( mesh )
     signedDistances = vtk.vtkFloatArray()
 
+    pos = []
+    neg = []
+
     for pointId in range(points.GetNumberOfPoints()):
         p = points.GetPoint(pointId)
         signedDistance = implicitPolyDataDistance.EvaluateFunction(p)
         signedDistances.InsertNextValue(signedDistance)
-
-    end = time.time()
-    print( "Done in ", int( end - start) , "seconds" )
-    if args.output : writeSDFToNPZ( points, signedDistances, args.output, scale, offset, args.yMin )
-    if args.display : display( points, signedDistances, mesh )
-
-def writeSDFToNPZ( points, sdf, filename, scale, offset, yMin = -100000 ):
-
-    pos = []
-    neg = []
-
-    for i in range( points.GetNumberOfPoints() ):
-        p = points.GetPoint( i )
-        if p[ 1 ] < yMin : continue
-        s = sdf.GetValue( i )
+        if p[ 1 ] < args.yMin : continue
         sample = []
         for j in range( 3 ): sample.append( p[ j ] );
-        sample.append(s);
-        arr = pos if s > 0 else neg
+        sample.append(signedDistance);
+        arr = pos if signedDistance > 0 else neg
         arr.append( sample )
 
     pos = np.array( pos, dtype=np.float32 )
     neg = np.array( neg, dtype=np.float32 )
-    scale = np.array( scale, dtype=np.float32 )
-    offset = np.array( offset, dtype=np.float32 )
-    np.savez( filename, pos = pos, neg = neg, scale = scale, offset = offset )
+    end = time.time()
+    print( "Done in ", int( end - start) , "seconds" )
+    if args.display : display( points, signedDistances, mesh )
+    return pos, neg, scale, offset
 
-
-if __name__ == '__main__':
+def getParser():
     parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
     parser.add_argument( "-d", dest= "display", help="display result", action="store_true" )
     parser.add_argument( "-n", dest= "numberOfSamples", help="number of samples", type= int, default = 500000 )
@@ -169,8 +158,17 @@ if __name__ == '__main__':
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
     parser.add_argument( "-m", dest = 'mesh', help = 'input mesh', required = True )
     parser.add_argument( "-b", dest = 'boxMesh', help = 'input box mesh which will be used to compute bounding box' )
-    parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
     parser.add_argument( "-t", dest = 'test', help = 'use tighter sampling for test', action="store_true"  )
     parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )
+    return parser
+
+
+if __name__ == '__main__':
+    parser = getParser()
+    parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
     args = parser.parse_args()
-    main( args )
+    pos, neg, scale, offset = generate( args )
+    if args.output :
+        scale = np.array( scale, dtype = np.float32 )
+        offset = np.array( offset, dtype = np.float32 )
+        np.savez( filename, pos = pos, neg = neg, scale = scale, offset = offset )

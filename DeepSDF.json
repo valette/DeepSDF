@@ -71,7 +71,7 @@
 					"prefix" : "--iters "
 				}
 			],
-			"executable" : "reconstructSingle.py",
+			"executable" : "reconstruct_single.py",
 			"engine" : "python3"
 		}
 	}

@@ -13,8 +13,8 @@ from reconstruct import reconstruct
 import deep_sdf
 import deep_sdf.workspace as ws
 
-if __name__ == "__main__":
 
+def getParser():
     arg_parser = argparse.ArgumentParser(
         description="Use a trained DeepSDF decoder to reconstruct a shape given SDF "
         + "samples."
@@ -49,6 +49,11 @@ if __name__ == "__main__":
         default=800,
         help="The number of iterations of latent code optimization to perform.",
     )
+    return arg_parser
+
+if __name__ == "__main__":
+
+    arg_parser = getParser()
     arg_parser.add_argument(
         "--npz",
         "-z",
@@ -56,7 +61,6 @@ if __name__ == "__main__":
         help="The npz file to reconstruct",
         required=True
     )
-
     deep_sdf.add_common_args(arg_parser)
 
     args = arg_parser.parse_args()

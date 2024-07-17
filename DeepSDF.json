@@ -73,6 +73,29 @@
 			],
 			"executable" : "reconstruct_single.py",
 			"engine" : "python3"
+		},
+		"latent2mesh" : {
+			"parameters" : [
+				{
+					"name" : "csv",
+					"type" : "file",
+					"prefix" : "-csv ",
+					"required" : true
+				},
+				{
+					"name" : "experiment",
+					"type" : "directory",
+					"prefix" : "-e ",
+					"required" : "true"
+				},
+				{
+					"name" : "resolution",
+					"type" : "int",
+					"prefix" : "-r "
+				}
+			],
+			"executable" : "latent2mesh.py",
+			"engine" : "python3"
 		}
 	}
 }

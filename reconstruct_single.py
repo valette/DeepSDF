@@ -48,6 +48,15 @@ def add_args( arg_parser ):
         action = "store_true",
         help="disable GPU",
     )
+    arg_parser.add_argument(
+        "--numSamples",
+        "-n",
+        dest="numberOfSamples",
+        help="Number of samples",
+        type=int,
+        default=8000
+    )
+
     deep_sdf.add_common_args(arg_parser)
 
 def init( args ):
@@ -97,7 +106,7 @@ def reconstruct_mesh( name, args, specs, decoder, data_sdf ):
         data_sdf,
         0.01,  # [emp_mean,emp_var],
         0.1,
-        num_samples=8000,
+        num_samples=args.numberOfSamples,
         lr=5e-3,
         l2reg=True,
         args=args

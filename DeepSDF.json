@@ -69,6 +69,11 @@
 					"name" : "iterations",
 					"type" : "int",
 					"prefix" : "--iters "
+				},
+				{
+					"name" : "samples",
+					"type" : "int",
+					"prefix" : "--numSamples "
 				}
 			],
 			"executable" : "reconstruct_single.py",

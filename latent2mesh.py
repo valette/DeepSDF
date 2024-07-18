@@ -101,7 +101,7 @@ if __name__ == "__main__":
     if latent_size != len( latent ) :
         print( "Error : latent conde size must be", latent_size, ", not", len( latent ) )
         exit( 1 )
-    latent = torch.tensor( latent )
+    latent = torch.tensor( latent ).to( device )
     decoder.eval()
 
     start = time.time()

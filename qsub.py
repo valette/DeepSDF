@@ -12,7 +12,7 @@ gitDir = os.path.dirname( os.path.realpath(__file__) )
 name = "DeepSDF"
 
 parser = argparse.ArgumentParser( description = 'train DeepSDF via qsub', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
-parser.add_argument( "-d", "--dry", dest = 'dryRun', help = "dry run", default = False, action="store_true" )
+parser.add_argument( "-g", "--go", help = "really submit job", action="store_true" )
 parser.add_argument( "-s", "--specs",  dest = 'specs', help = "specs file", required = True )
 parser.add_argument( "-c", "--config", metavar=('parameter', 'value'), action='append', nargs=2, help = "specs parameters", default = [] )
 
@@ -77,8 +77,8 @@ add( "zip -r csv.zip CSV" )
 print( "job.pbs : " )
 print( job )
 
-if args.dryRun :
-    print( "Dry run : job not submitted" )
+if not args.go :
+    print( "Job not submitted. Relaunch with option -g or --go to really submit job" )
     exit( 0 )
 
 os.mkdir( jobPath )

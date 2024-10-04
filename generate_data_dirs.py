@@ -23,7 +23,7 @@ for root, dirs, files in os.walk( args.directory ):
         if not f.endswith( ".stl" ) : continue
         arr = f.split( "." )
         #print(os.path.join(root, f))
-        newDir = os.path.join( args.outputDir, "_".join( arr[ 0 ].split( " " ) ) )
+        newDir = os.path.join( args.outputDir, "_".join( ".".join( arr[ :-1 ] ).split( " " ) ) )
         if not os.path.exists( newDir ) : os.makedirs( newDir )
         inputFile = os.path.join( root, f )
         outputFile = "_".join( os.path.join( newDir, f ).split( " " ) )

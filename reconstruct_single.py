@@ -141,7 +141,7 @@ if __name__ == "__main__":
         "--npz",
         "-z",
         dest="npz",
-        help="The npz file to reconstruct",
+        help="The npz file or directory to reconstruct",
         required=True
     )
     arg_parser.add_argument(
@@ -154,6 +154,18 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     specs, decoder = init(args)
     logging.debug("loading {}".format(args.npz))
-    data_sdf = deep_sdf.data.read_sdf_samples_into_ram(args.npz)
-    reconstruct_mesh( args.output, args, specs, decoder, data_sdf )
+    files=[]
+
+    if os.path.isdir( args.npz ):
+        for file in sorted( os.listdir( args.npz ) ):
+            if not file.endswith( ".npz" ) : continue
+            files.append( [ os.path.join( args.npz, file ), file[ : -4 ] ] )
+    else:
+	    files.append( [ args.npz, "mesh" ] )
+
+    for npz, output in files:
+        print( "******** NPZ file :", npz )
+        data_sdf = deep_sdf.data.read_sdf_samples_into_ram(npz)
+        reconstruct_mesh( output, args, specs, decoder, data_sdf )
+        print( "Saved to", output + ".ply" );
 

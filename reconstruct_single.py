@@ -49,9 +49,9 @@ def add_args( arg_parser ):
         help="disable GPU",
     )
     arg_parser.add_argument(
-        "--numSamples",
-        "-n",
-        dest="numberOfSamples",
+        "--num_reconstruction_samples",
+        "-nr",
+        dest="number_of_reconstruction_samples",
         help="Number of samples",
         type=int,
         default=8000
@@ -106,7 +106,7 @@ def reconstruct_mesh( name, args, specs, decoder, data_sdf ):
         data_sdf,
         0.01,  # [emp_mean,emp_var],
         0.1,
-        num_samples=args.numberOfSamples,
+        num_samples=args.number_of_reconstruction_samples,
         lr=5e-3,
         l2reg=True,
         args=args

@@ -21,16 +21,16 @@ files = []
 if not os.path.exists( args.outputDir ) : os.mkdir( args.outputDir )
 
 if os.path.isdir( args.mesh ):
-	for file in os.listdir( args.mesh ) :
+	for file in sorted( os.listdir( args.mesh ) ):
 		if not file.endswith( ".stl" ) : continue
 		files.append( [ os.path.join( args.mesh, file ), os.path.join( args.outputDir, file[ : -4 ] ) ] )
 else:
 	files.append( [ args.mesh, "mesh" ] )
 
-for entry in files:
-	print( "******** Mesh :", entry[ 0 ] )
+for mesh, output in files:
+	print( "******** Mesh :", mesh )
 	reader = vtk.vtkSTLReader()
-	reader.SetFileName( entry[ 0 ] )
+	reader.SetFileName( mesh )
 	reader.Update()
 	mesh = reader.GetOutput()
 	pos, neg, scale, offset = generate_distance_data.generate( args, mesh )
@@ -38,5 +38,5 @@ for entry in files:
 	print( offset )
 	data_sdf = [ torch.Tensor(pos), torch.Tensor(neg), scale, offset ]
 	specs, decoder = reconstruct_single.init(args)
-	reconstruct_single.reconstruct_mesh( entry[ 1 ], args, specs, decoder, data_sdf )
-	print( "Saved to", entry[ 1 ] + ".ply" );
+	reconstruct_single.reconstruct_mesh( output, args, specs, decoder, data_sdf )
+	print( "Saved to", output + ".ply" );

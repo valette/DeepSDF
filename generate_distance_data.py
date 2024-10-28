@@ -3,6 +3,7 @@
 import argparse
 import math
 import numpy as np
+import os
 from pointsViewer import display
 import random
 import time
@@ -162,11 +163,24 @@ if __name__ == '__main__':
     parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
     args = parser.parse_args()
     reader = vtk.vtkSTLReader()
-    reader.SetFileName( args.mesh )
-    reader.Update()
-    mesh = reader.GetOutput()
-    pos, neg, scale, offset = generate( args, mesh )
-    if args.output :
-        scale = np.array( scale, dtype = np.float32 )
-        offset = np.array( offset, dtype = np.float32 )
-        np.savez( args.output, pos = pos, neg = neg, scale = scale, offset = offset )
+    files = []
+
+    if os.path.isdir( args.mesh ):
+        for file in sorted( os.listdir( args.mesh ) ):
+            if not file.endswith( ".stl" ) : continue
+            mesh_file = os.path.join( args.mesh, file )
+            output_npz = mesh_file.split( "/" ).pop()[ : -4 ] + ".npz"
+            files.append( [ mesh_file , output_npz ] )
+    else:
+        files.append( [ args.mesh, args.output ] )
+
+    for mesh, output in files:
+        print( "Mesh :", mesh )
+        reader.SetFileName( mesh )
+        reader.Update()
+        mesh = reader.GetOutput()
+        pos, neg, scale, offset = generate( args, mesh )
+        if output :
+            scale = np.array( scale, dtype = np.float32 )
+            offset = np.array( offset, dtype = np.float32 )
+            np.savez( output, pos = pos, neg = neg, scale = scale, offset = offset )

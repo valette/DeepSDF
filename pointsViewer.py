@@ -40,9 +40,9 @@ def main( args ):
         reader.Update()
         mesh = reader.GetOutput()
 
-    display( points, signedDistances, mesh, args.meshColor, args.meshOpacity )
+    display( points, signedDistances, mesh, args.meshColor, args.meshOpacity, scale = args.scale )
 
-def display( points, signedDistances, mesh = None, color = [ 1, 0, 0 ], opacity = 0.3 ):
+def display( points, signedDistances, mesh = None, color = [ 1, 0, 0 ], opacity = 0.3, scale = 1 ):
 
     renderer = vtk.vtkRenderer()
 
@@ -59,6 +59,8 @@ def display( points, signedDistances, mesh = None, color = [ 1, 0, 0 ], opacity 
 
     polyData = vtk.vtkPolyData()
     polyData.SetPoints(points)
+    for i in range( signedDistances.GetNumberOfValues() ):
+        signedDistances.SetValue( i, signedDistances.GetValue( i ) * scale )
     polyData.GetPointData().SetScalars(signedDistances)
 
     vertexGlyphFilter = vtk.vtkVertexGlyphFilter()
@@ -94,5 +96,6 @@ if __name__ == '__main__':
     parser.add_argument( "-m", "--mesh", help = 'input mesh' )
     parser.add_argument( "-c", "--meshColor", type = float, nargs = 3, default = [ 1, 0, 0 ], help = 'mesh color' )
     parser.add_argument( "-o", "--meshOpacity", type = float, default = 0.3, help = 'mesh opacity' )
+    parser.add_argument( "-s", "--scale", dest= "scale", help="distance scale", default = 1, type = float )
     args = parser.parse_args()
     main( args )

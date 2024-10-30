@@ -73,7 +73,6 @@ def display( points, signedDistances, mesh = None, color = [ 1, 0, 0 ], opacity 
     signedDistanceActor.SetMapper(signedDistanceMapper)
 
     renderer.AddViewProp(signedDistanceActor)
-    colors = vtk.vtkNamedColors()
 
     renderWindow = vtk.vtkRenderWindow()
     renderWindow.AddRenderer( renderer )

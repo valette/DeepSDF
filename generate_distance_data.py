@@ -17,8 +17,7 @@ def addRandomPoints( mesh, points, numberOfPoints ):
         z = random.random() - 0.5
         points.InsertNextPoint( x, y , z )
 
-def addSurfacePoints( mesh, points, numberOfPoints, variance, secondVariance, useNormals ):
-    nCells = mesh.GetNumberOfCells();
+def addSurfacePoints( mesh, points, nCells, numberOfPoints, variance, secondVariance, useNormals ):
     meshPoints = mesh.GetPoints()
     sigma1 = math.sqrt( variance )
     sigma2 = math.sqrt( secondVariance )
@@ -71,9 +70,20 @@ def generate( args, mesh ):
     variance = args.variance
     numberOfSamples = args.numberOfSamples
 
-    if args.test :
-        variance = variance / 10
+    holesFilling = vtk.vtkFillHolesFilter()
+    holesFilling.SetInputData( mesh )
+    holesFilling.SetHoleSize( 10 )
+    normals = vtk.vtkPolyDataNormals()
+    normals.ConsistencyOn()
+    normals.AutoOrientNormalsOn()
+    normals.SetInputConnection( holesFilling.GetOutputPort() )
+    normals.Update()
+    nCells = mesh.GetNumberOfCells()
+    print( nCells, "triangles before hole filling" )
+    mesh = normals.GetOutput()
+    print( mesh.GetNumberOfCells(), "triangles after hole filling" )
 
+    if args.test : variance = variance / 10
     secondVariance = variance / 10
     bounds = mesh.GetBounds()
     print( "Initial mesh bounds: ", bounds )
@@ -107,7 +117,7 @@ def generate( args, mesh ):
     points = vtk.vtkPoints()
 
     numberOfNearSurfacePoints = math.floor( 0.5 + args.nearRatio * numberOfSamples )
-    addSurfacePoints( mesh, points, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
+    addSurfacePoints( mesh, points, nCells, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
     print( points.GetNumberOfPoints(), "near surface samples" )
     addRandomPoints( mesh, points, numberOfSamples - points.GetNumberOfPoints() )
 
@@ -128,7 +138,7 @@ def generate( args, mesh ):
 
     for pointId in range(points.GetNumberOfPoints()):
         p = points.GetPoint(pointId)
-        signedDistance = implicitPolyDataDistance.EvaluateFunction(p)
+        signedDistance = implicitPolyDataDistance.EvaluateFunction(p) * args.scale
         signedDistances.InsertNextValue(signedDistance)
         if p[ 1 ] < args.yMin : continue
         sample = []
@@ -137,6 +147,7 @@ def generate( args, mesh ):
         arr = pos if signedDistance > 0 else neg
         arr.append( sample )
 
+    print( "Distance range : ", signedDistances.GetRange() )
     pos = np.array( pos, dtype=np.float32 )
     neg = np.array( neg, dtype=np.float32 )
     end = time.time()
@@ -151,6 +162,7 @@ def add_args( parser ):
     parser.add_argument( "--dilation", help="dilation ratio unit box", type= float, default = 0.05 )
     parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.0025 )
     parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
+    parser.add_argument( "-s", "--scale", dest= "scale", help="distance scale", default = 1, type = float )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
     parser.add_argument( "-m", dest = 'mesh', help = 'input mesh', required = True )
     parser.add_argument( "-b", dest = 'boxMesh', help = 'input box mesh which will be used to compute bounding box' )

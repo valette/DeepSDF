@@ -102,10 +102,9 @@ def generate( args, mesh ):
 
     box = vtk.vtkBoundingBox()
     box.SetBounds( bounds )
-    maxPoint = box.GetMaxPoint();
-    minPoint = box.GetMinPoint();
-    offset = []
-    for i in range( 3 ) : offset.append( - 0.5 * ( maxPoint[ i ] + minPoint[ i ] ) )
+    offset = [ 0, 0, 0 ]
+    box.GetCenter( offset )
+    for i in range( 3 ) : offset[ i ] = - offset[ i ]
     print ( "Offset : ", offset )
     length = box.GetMaxLength()
     print( "Max length: ", length )
@@ -120,9 +119,8 @@ def generate( args, mesh ):
     print( "Final mesh bounds: ", mesh.GetBounds() )
 
     points = vtk.vtkPoints()
-
     numberOfSamples = args.numberOfSamples
-    numberOfNearSurfacePoints = math.floor( 0.5 + args.nearRatio * numberOfSamples )
+    numberOfNearSurfacePoints = round( args.nearRatio * numberOfSamples )
     addSurfacePoints( mesh, points, nCells, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
     print( points.GetNumberOfPoints(), "near surface samples" )
     addRandomPoints( mesh, points, numberOfSamples - points.GetNumberOfPoints() )

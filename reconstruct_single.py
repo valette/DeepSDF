@@ -134,7 +134,8 @@ def reconstruct_mesh( name, args, specs, decoder, data_sdf ):
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         description="Use a trained DeepSDF decoder to reconstruct a shape given SDF "
-        + "samples."
+        + "samples.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     add_args( arg_parser )
     arg_parser.add_argument(

@@ -67,22 +67,27 @@ def addSurfacePoints( mesh, points, nCells, numberOfPoints, variance, secondVari
 def generate( args, mesh ):
     start = time.time()
     random.seed( args.seed )
-    variance = args.variance
-    numberOfSamples = args.numberOfSamples
 
+    print( mesh.GetNumberOfCells(), "triangles before processing" )
+    connectivity = vtk.vtkPolyDataConnectivityFilter()
+    connectivity.SetExtractionModeToLargestRegion()
+    connectivity.SetInputData( mesh )
     holesFilling = vtk.vtkFillHolesFilter()
-    holesFilling.SetInputData( mesh )
+    holesFilling.SetInputConnection( connectivity.GetOutputPort() )
     holesFilling.SetHoleSize( 10 )
     normals = vtk.vtkPolyDataNormals()
     normals.ConsistencyOn()
     normals.AutoOrientNormalsOn()
     normals.SetInputConnection( holesFilling.GetOutputPort() )
     normals.Update()
-    nCells = mesh.GetNumberOfCells()
-    print( nCells, "triangles before hole filling" )
+    nCells = connectivity.GetOutput().GetNumberOfCells()
+
+    print( connectivity.GetNumberOfExtractedRegions(), "connected components" )
+    print( nCells, "triangles after removing small connected components" )
     mesh = normals.GetOutput()
     print( mesh.GetNumberOfCells(), "triangles after hole filling" )
 
+    variance = args.variance
     if args.test : variance = variance / 10
     secondVariance = variance / 10
     bounds = mesh.GetBounds()
@@ -116,6 +121,7 @@ def generate( args, mesh ):
 
     points = vtk.vtkPoints()
 
+    numberOfSamples = args.numberOfSamples
     numberOfNearSurfacePoints = math.floor( 0.5 + args.nearRatio * numberOfSamples )
     addSurfacePoints( mesh, points, nCells, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
     print( points.GetNumberOfPoints(), "near surface samples" )

@@ -2,31 +2,40 @@
 import argparse
 import os
 import shutil
+import tempfile
 import time
 
 start = time.time()
 parser = argparse.ArgumentParser( description = 'Generate data dirs', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
 parser.add_argument( dest= "directory", help="directory containing meshes" )
-parser.add_argument( dest= "outputDir", help="output directory" )
-# parser.add_argument( "-ns", dest= "numberOfSurfacePoints", help="number of surface points", type= float, default = 1000 )
-# parser.add_argument( "-r", dest= "dilation", help="dilation around box", type= float, default = 1 )
-# parser.add_argument( "-sigma", dest= "sigma", help="noise amplitude around surface", type= float, default = 0.5 )
-# parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
-# parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
-# parser.add_argument( dest = 'mesh', help = 'input mesh' )
+parser.add_argument( dest= "output_dir", help="output directory" )
+parser.add_argument( "--mesh2STL", dest= "mesh2STL", help="path to mesh2STl converter" )
 args = parser.parse_args()
 
-if not os.path.exists( args.outputDir ) : os.makedirs( args.outputDir )
+output_dir = os.path.abspath( args.output_dir )
+if not os.path.exists( output_dir ) : os.makedirs( output_dir )
 
 for root, dirs, files in os.walk( args.directory ):
     for f in files:
-        if not f.endswith( ".stl" ) : continue
+        inputFile = os.path.abspath( os.path.join( root, f ) )
+        for ext in [ ".ply", ".obj", ".vtk" ] :
+            if not f.endswith( ext ) : continue
+            if not args.mesh2STL:
+                print( "Warning : no mesh2STL path provided, cannot convert", inputFile )
+                continue
+            temp_dir = tempfile.TemporaryDirectory()
+            print( "Converting ", inputFile )
+            os.chdir( temp_dir.name )
+            os.system( args.mesh2STL + " " + '"' + inputFile + '"')
+            inputFile = os.path.abspath( os.path.join( temp_dir.name, "mesh.stl" ) )
+
+        if not inputFile.endswith( ".stl" ) : continue
         arr = f.split( "." )
-        #print(os.path.join(root, f))
-        newDir = os.path.join( args.outputDir, "_".join( ".".join( arr[ :-1 ] ).split( " " ) ) )
+        arr.pop()
+        arr.append( "stl" )
+        newDir = os.path.join( output_dir, "_".join( ".".join( arr[ :-1 ] ).split( " " ) ) )
         if not os.path.exists( newDir ) : os.makedirs( newDir )
-        inputFile = os.path.join( root, f )
-        outputFile = "_".join( os.path.join( newDir, f ).split( " " ) )
+        outputFile = "_".join( os.path.join( newDir, ".".join( arr ) ).split( " " ) )
         shutil.copyfile( inputFile, outputFile )
         print( inputFile )
         print( newDir )

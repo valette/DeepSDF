@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser( description = 'train DeepSDF via qsub', format
 parser.add_argument( "-g", "--go", help = "really submit job", action="store_true" )
 parser.add_argument( "-s", "--specs",  dest = 'specs', help = "specs file", required = True )
 parser.add_argument( "-c", "--config", metavar=('parameter', 'value'), action='append', nargs=2, help = "specs parameters", default = [] )
+parser.add_argument( "-l", "--supplementary_lines", action='append', help = "supplementary script lines", default = [] )
 
 args = parser.parse_args()
 trainExec = os.path.join( gitDir, "train_deep_sdf.py" )
@@ -73,6 +74,7 @@ add( "python " + reconstructExec + " -e ./ --data " + specs[ "DataSource" ] + " 
 add( "python " + reconstructExec + " --latent -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TrainSplit" ] )
 add( "python " + pth2csvExec + " Reconstructions CSV" )
 add( "zip -r csv.zip CSV" )
+for line in args.supplementary_lines: add( line )
 
 print( "job.pbs : " )
 print( job )

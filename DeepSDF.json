@@ -15,6 +15,11 @@
 					"prefix" : "-b "
 				},
 				{
+					"name" : "boxExtension",
+					"type" : "floatArray",
+					"prefix" : "-be "
+				},
+				{
 					"name" : "variance",
 					"type" : "float",
 					"prefix" : "-v "

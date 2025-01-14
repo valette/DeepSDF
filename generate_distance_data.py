@@ -98,7 +98,28 @@ def generate( args, mesh ):
         reader2.SetFileName( args.boxMesh )
         reader2.Update()
         bounds = reader2.GetOutput().GetBounds()
-        print( "Box mesh bounds: ", bounds )
+        print( "Box mesh bounds:", bounds )
+
+    if args.box_extension:
+        box_extension = args.box_extension
+        bounds = list( bounds )
+        extended = False
+        for index in range( 3 ):
+            i_max = 1 + index * 2
+            i_min = index * 2
+            diff = bounds[ i_max ] - bounds[ i_min ]
+
+            if box_extension[ i_min ] > diff :
+                bounds[ i_min ] -= box_extension[ i_min ] - diff
+                diff = bounds[ i_max ] - bounds[ i_min ]
+                extended = True
+
+            if box_extension[ i_max ] > diff :
+                bounds[ i_max ] += box_extension[ i_max ] - diff
+                extended = True
+
+        if extended : print( "Extended bounds:", bounds )
+
 
     box = vtk.vtkBoundingBox()
     box.SetBounds( bounds )
@@ -160,17 +181,18 @@ def generate( args, mesh ):
     return pos, neg, scale, offset
 
 def add_args( parser ):
-    parser.add_argument( "-d", dest= "display", help="display result", action="store_true" )
-    parser.add_argument( "-n", dest= "numberOfSamples", help="number of samples", type= int, default = 500000 )
+    parser.add_argument( "-d", "--display", help="display result", action="store_true" )
+    parser.add_argument( "-n", "--numberOfSamples", help="number of samples", type= int, default = 500000 )
     parser.add_argument( "--near", dest= "nearRatio", help="near surface sampling ratio", type = float, default = 47.0 / 50.0 )
     parser.add_argument( "--dilation", help="dilation ratio unit box", type= float, default = 0.05 )
     parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.0025 )
-    parser.add_argument( "-seed", dest= "seed", help="random seed", type= int, default = 666 )
-    parser.add_argument( "-s", "--scale", dest= "scale", help="distance scale", default = 1, type = float )
+    parser.add_argument( "-seed", help="random seed", type= int, default = 666 )
+    parser.add_argument( "-s", "--scale", help="distance scale", default = 1, type = float )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
-    parser.add_argument( "-m", dest = 'mesh', help = 'input mesh', required = True )
-    parser.add_argument( "-b", dest = 'boxMesh', help = 'input box mesh which will be used to compute bounding box' )
-    parser.add_argument( "-t", dest = 'test', help = 'use tighter sampling for test', action="store_true"  )
+    parser.add_argument( "-m", '--mesh', help = 'input mesh', required = True )
+    parser.add_argument( "-b", '--boxMesh', help = 'input box mesh which will be used to compute bounding box' )
+    parser.add_argument( "-be", '--box_extension', help = 'input box mesh will be extended to reach expected dimensions', nargs='+', type = float )
+    parser.add_argument( "-t", '--test', help = 'use tighter sampling for test', action="store_true"  )
     parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )
 
 if __name__ == '__main__':

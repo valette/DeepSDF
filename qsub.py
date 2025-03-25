@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser( description = 'train DeepSDF via qsub', format
 parser.add_argument( "-g", "--go", help = "really submit job", action="store_true" )
 parser.add_argument( "-s", "--specs",  dest = 'specs', help = "specs file", required = True )
 parser.add_argument( "-c", "--config", metavar=('parameter', 'value'), action='append', nargs=2, help = "specs parameters", default = [] )
+parser.add_argument( "-r", "--job_root", help = "default root job dir", default = join( homeDir, name ) )
 parser.add_argument( "-l", "--supplementary_lines", action='append', help = "supplementary script lines", default = [] )
 
 args = parser.parse_args()
@@ -22,20 +23,21 @@ trainExec = os.path.join( gitDir, "train_deep_sdf.py" )
 reconstructExec = os.path.join( gitDir, "reconstruct.py" )
 pth2csvExec = os.path.join( gitDir, "pth2csv.py" )
 job = ""
-jobRoot = join( homeDir, name )
+job_root = os.path.abspath( args.job_root )
+if not os.path.exists( job_root ): os.mkdir( job_root )
 maxJobId = 0
 
-for dir in os.listdir( jobRoot ) :
-    if not os.path.isdir( join( jobRoot, dir) ) : continue
+for dir in os.listdir( job_root ) :
+    if not os.path.isdir( join( job_root, dir) ) : continue
     try:
         maxJobId = max( maxJobId, int( dir ) )
     except:
         continue
 
 jobId = str( maxJobId + 1 )
-jobPath = join( jobRoot, jobId )
+jobPath = join( job_root, jobId )
 
-with open( args.specs, 'r' ) as openfile: 
+with open( args.specs, 'r' ) as openfile:
 	specs = json.load( openfile )
 
 for key, value in args.config:

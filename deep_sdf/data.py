@@ -20,14 +20,13 @@ def get_instance_filenames(data_source, split):
                 instance_filename = os.path.join(
                     dataset, class_name, instance_name + ".npz"
                 )
-                if not os.path.isfile(
-                    os.path.join(data_source, ws.sdf_samples_subdir, instance_filename)
-                ):
+                full_path = os.path.join(data_source, ws.sdf_samples_subdir, instance_filename)
+                if not os.path.isfile( full_path ):
                     # raise RuntimeError(
                     #     'Requested non-existent file "' + instance_filename + "'"
                     # )
                     logging.warning(
-                        "Requested non-existent file '{}'".format(instance_filename)
+                        "Requested non-existent file '{}'".format(full_path)
                     )
                 npzfiles += [instance_filename]
     return npzfiles

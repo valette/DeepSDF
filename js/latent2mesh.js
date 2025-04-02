@@ -9,8 +9,8 @@ const params = {
     csvSource : "DeepSDFModels/56/CSV/1ere_PM_Mand_(1)_modif.csv",
     csvTarget : "DeepSDFModels/56/CSV/1ere_PM_sup_(12).csv",
     interpolationSteps : 10,
-    resolution : 64
-
+    resolution : 64,
+    ...window?.DeepSDF?.latent2meshParams
 };
 
 desk.URLParameters.parseParameters( params );

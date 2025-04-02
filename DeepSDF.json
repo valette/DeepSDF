@@ -1,5 +1,10 @@
 {
-
+    "dataDirs" : {
+        "DeepSDF" : {
+            "path" : "js/",
+            "hidden" : true
+        }
+    },
   "actions": {
 		"mesh2NPZ" : {
 			"parameters" : [

@@ -102,14 +102,16 @@ for dir in tqdm( sorted( os.listdir( job_root ) ) ):
             entry[ "job_args" ] = job_args
 
         with open( join( full_dir, "specs.json"), 'r') as file:
-            entry[ "config"] = cfg = json.load(file)
+            entry[ "config" ] = cfg = json.load(file)
 
         with open( join( full_dir, "log.out" ) ) as f:
-            lines = f.read().split( "\n" )
-            exec_host = entry[ "exec_host" ] = lines[ 0 ].split( "." )[ 0 ]
-            if exec_host in gpus:
-                entry[ "gpu" ] = gpus[ exec_host ]
-            else : entry[ "gpu" ] = "none"
+            for line in f.read().split( "\n" ) :
+                if "linux" in line :
+                    exec_host = entry[ "exec_host" ] = line.split( "." )[ 0 ]
+                    if exec_host in gpus:
+                        entry[ "gpu" ] = gpus[ exec_host ]
+                    else : entry[ "gpu" ] = "none"
+                    break
 
         jobs.append( entry )
 

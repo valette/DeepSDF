@@ -21,10 +21,9 @@ name2 = arr[ -1 ]
 names = []
 
 for f in os.listdir( path ) :
-    meshFile = os.path.join( path, f, f + ".stl" )
-    if not os.path.isfile( meshFile ) : continue
-#    print( meshFile )
-    names.append( f )
+    for ext in [ ".stl", ".vtp" ]:
+        meshFile = os.path.join( path, f, f + ext )
+        if os.path.isfile( meshFile ) : names.append( f )
 
 random.shuffle( names )
 print( "Total : ", len( names ), "items" )

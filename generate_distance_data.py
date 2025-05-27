@@ -17,6 +17,11 @@ def addRandomPoints( mesh, points, numberOfPoints ):
         z = random.random() - 0.5
         points.InsertNextPoint( x, y , z )
 
+def get_cell_weight( mesh, c ) :
+    cell = mesh.GetCell( c )
+    if cell.GetCellType() != vtk.VTK_TRIANGLE : return 0
+    return cell.ComputeArea()
+
 def addSurfacePoints( mesh, points, nCells, numberOfPoints, variance, secondVariance, useNormals ):
     meshPoints = mesh.GetPoints()
     sigma1 = math.sqrt( variance )
@@ -24,7 +29,7 @@ def addSurfacePoints( mesh, points, nCells, numberOfPoints, variance, secondVari
     print( "Sigma1 :", sigma1, "Sigma2 :", sigma2 )
 
     items = list( range( nCells ) )
-    weights = list( map( lambda i : mesh.GetCell( i ).ComputeArea(), items ) )
+    weights = list( map( lambda i : get_cell_weight( mesh, i ), items ) )
     samples = random.choices( items, weights=weights, k = math.floor( numberOfPoints / 2 ) )
 
     n = [ 0, 0, 0 ]
@@ -140,11 +145,11 @@ def generate( args, mesh ):
     print( "Final mesh bounds: ", mesh.GetBounds() )
 
     points = vtk.vtkPoints()
-    numberOfSamples = args.numberOfSamples
-    numberOfNearSurfacePoints = round( args.nearRatio * numberOfSamples )
+    number_of_samples = args.number_of_samples
+    numberOfNearSurfacePoints = round( args.nearRatio * number_of_samples )
     addSurfacePoints( mesh, points, nCells, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
     print( points.GetNumberOfPoints(), "near surface samples" )
-    addRandomPoints( mesh, points, numberOfSamples - points.GetNumberOfPoints() )
+    addRandomPoints( mesh, points, number_of_samples - points.GetNumberOfPoints() )
 
     print( points.GetNumberOfPoints(), "samples in total " )
     box = vtk.vtkBoundingBox()
@@ -177,12 +182,12 @@ def generate( args, mesh ):
     neg = np.array( neg, dtype=np.float32 )
     end = time.time()
     print( "SDF values computed in", int( end - start) , "seconds" )
-    if args.display : display( points, signedDistances, mesh )
+    if args.display : display( points, signedDistances, mesh, opacity=0.01 )
     return pos, neg, scale, offset
 
 def add_args( parser ):
     parser.add_argument( "-d", "--display", help="display result", action="store_true" )
-    parser.add_argument( "-n", "--numberOfSamples", help="number of samples", type= int, default = 500000 )
+    parser.add_argument( "-n", "--number_of_samples", help="number of samples", type= int, default = 500000 )
     parser.add_argument( "--near", dest= "nearRatio", help="near surface sampling ratio", type = float, default = 47.0 / 50.0 )
     parser.add_argument( "--dilation", help="dilation ratio unit box", type= float, default = 0.05 )
     parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.0025 )
@@ -199,13 +204,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
     add_args( parser )
     parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
+#    import sys
+#    raise Warning( " ".join( sys.argv ) )
     args = parser.parse_args()
-    reader = vtk.vtkSTLReader()
     files = []
 
     if os.path.isdir( args.mesh ):
         for file in sorted( os.listdir( args.mesh ) ):
-            if not file.endswith( ".stl" ) : continue
+            if not file.endswith( ".stl" ) and not file.endswith( ".vtk" ): continue
             mesh_file = os.path.join( args.mesh, file )
             output_npz = mesh_file.split( "/" ).pop()[ : -4 ] + ".npz"
             files.append( [ mesh_file , output_npz ] )
@@ -214,6 +220,9 @@ if __name__ == '__main__':
 
     for mesh, output in files:
         print( "Mesh :", mesh )
+        if mesh.endswith( ".stl" ) :
+            reader = vtk.vtkSTLReader()
+        else : reader = vtk.vtkXMLPolyDataReader()
         reader.SetFileName( mesh )
         reader.Update()
         mesh = reader.GetOutput()

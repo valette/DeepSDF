@@ -29,10 +29,15 @@ for root, dirs, files in os.walk( args.directory ):
             os.system( args.mesh2STL + " " + '"' + inputFile + '"')
             inputFile = os.path.abspath( os.path.join( temp_dir.name, "mesh.stl" ) )
 
-        if not inputFile.endswith( ".stl" ) : continue
+        extension_OK = False
+        for ext in [ "stl", "vtp" ] :
+            if inputFile.endswith( "." + ext ) :
+                extension_OK = True
+                extension = ext
+        if not extension_OK : continue
         arr = f.split( "." )
         arr.pop()
-        arr.append( "stl" )
+        arr.append( extension )
         newDir = os.path.join( output_dir, "_".join( ".".join( arr[ :-1 ] ).split( " " ) ) )
         if not os.path.exists( newDir ) : os.makedirs( newDir )
         outputFile = "_".join( os.path.join( newDir, ".".join( arr ) ).split( " " ) )

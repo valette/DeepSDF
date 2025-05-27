@@ -148,6 +148,12 @@ if __name__ == "__main__":
         help="path to PreprocessMesh executable",
     )
 
+    arg_parser.add_argument(
+        "--SDF_options",
+        dest="SDF_options",
+        help="additionnal SDF computation options",
+    )
+
     deep_sdf.add_common_args(arg_parser)
 
     args = arg_parser.parse_args()
@@ -226,6 +232,9 @@ if __name__ == "__main__":
                 mesh_filename = deep_sdf.data.find_mesh_in_directory(shape_dir)
 
                 specific_args = []
+
+                if args.SDF_options:
+                    specific_args.extend( args.SDF_options.split( " " ) )
 
                 if args.surface_sampling:
                     normalization_param_target_dir = os.path.join(

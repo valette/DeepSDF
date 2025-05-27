@@ -48,7 +48,8 @@ def find_mesh_in_directory(shape_dir):
     mesh_filenames = list(glob.iglob(shape_dir + "/**/*.obj")) + list(
         glob.iglob(shape_dir + "/*.obj")) + list(
         glob.iglob(shape_dir + "/**/*.stl")) + list(
-        glob.iglob(shape_dir + "/*.stl"))
+        glob.iglob(shape_dir + "/*.stl")) + list(
+        glob.iglob(shape_dir + "/*.vtp"))
     if len(mesh_filenames) == 0:
         raise NoMeshFileError()
     elif len(mesh_filenames) > 1:

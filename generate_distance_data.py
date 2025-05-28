@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 import math
 import numpy as np
 import os
@@ -19,7 +20,9 @@ def addRandomPoints( mesh, points, numberOfPoints ):
 
 def get_cell_weight( mesh, c ) :
     cell = mesh.GetCell( c )
+    weights = mesh.GetCellData().GetScalars()
     if cell.GetCellType() != vtk.VTK_TRIANGLE : return 0
+    if weights : return weights.GetValue( c ) * cell.ComputeArea()
     return cell.ComputeArea()
 
 def addSurfacePoints( mesh, points, nCells, numberOfPoints, variance, secondVariance, useNormals ):
@@ -69,10 +72,60 @@ def addSurfacePoints( mesh, points, nCells, numberOfPoints, variance, secondVari
         points.InsertNextPoint( v2[ 0 ], v2[ 1 ], v2[ 2 ] )
         points.InsertNextPoint( v3[ 0 ], v3[ 1 ], v3[ 2 ] )
 
+def map_cell_values( mesh1, mesh2, weight_map ):
+    cell_centroids = vtk.vtkPoints()
+
+    for i in range( mesh1.GetNumberOfCells() ):
+        cell = mesh1.GetCell( i )
+        centroid = [ 0.0, 0.0, 0.0 ]
+        num_points = cell.GetNumberOfPoints()
+        for j in range( num_points ):
+            p = mesh1.GetPoint( cell.GetPointId( j ) )
+            for k in range( 3 ) : centroid[ k ] += p[ k ]
+        centroid = [ coord / num_points for coord in centroid ]
+        cell_centroids.InsertNextPoint( centroid )
+
+    polydata = vtk.vtkPolyData()
+    polydata.SetPoints( cell_centroids )
+    locator = vtk.vtkPointLocator()
+    locator.SetDataSet( polydata )
+    locator.BuildLocator()
+    number_of_found_cells = 0
+    input_values = mesh1.GetCellData().GetScalars()
+    output_values = vtk.vtkFloatArray()
+    output_values.SetNumberOfValues( mesh2.GetNumberOfCells() )
+    mesh2.GetCellData().SetScalars( output_values )
+    print( "weights : ", weight_map )
+
+    for i in range( mesh2.GetNumberOfCells() ):
+        cell = mesh2.GetCell(i)
+        centroid = [0.0, 0.0, 0.0]
+        num_points = cell.GetNumberOfPoints()
+        for j in range(num_points):
+            p = mesh2.GetPoint( cell.GetPointId( j ) )
+            for k in range( 3 ) : centroid[ k ] += p[ k ]
+        centroid = [coord / num_points for coord in centroid]
+        closest_centroid_id = locator.FindClosestPoint(centroid)
+        closest_centroid = polydata.GetPoint(closest_centroid_id)
+        distance = vtk.vtkMath.Distance2BetweenPoints( centroid, closest_centroid )
+        cell_weight = 1
+        if distance < 0.0001 :
+            number_of_found_cells += 1
+            label = str( int( input_values.GetTuple( closest_centroid_id )[ 0 ] ) )
+            if label in weight_map : cell_weight = weight_map[ label ]
+        output_values.SetValue( i, cell_weight )
+
+    print( number_of_found_cells, "matching cells")
+
 def generate( args, mesh ):
     start = time.time()
     random.seed( args.seed )
+    cell_data = mesh.GetCellData().GetScalars()
+    if cell_data :
+        original_mesh = vtk.vtkPolyData()
+        original_mesh.DeepCopy( mesh )
 
+    print( mesh.GetNumberOfPoints(), "vertices before processing" )
     print( mesh.GetNumberOfCells(), "triangles before processing" )
     connectivity = vtk.vtkPolyDataConnectivityFilter()
     connectivity.SetExtractionModeToLargestRegion()
@@ -89,8 +142,10 @@ def generate( args, mesh ):
 
     print( connectivity.GetNumberOfExtractedRegions(), "connected components" )
     print( nCells, "triangles after removing small connected components" )
+    print( connectivity.GetOutput().GetNumberOfPoints(), "vertices after removing small connected components" )
     mesh = normals.GetOutput()
     print( mesh.GetNumberOfCells(), "triangles after hole filling" )
+    print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
 
     variance = args.variance
     if args.test : variance = variance / 10
@@ -125,6 +180,10 @@ def generate( args, mesh ):
 
         if extended : print( "Extended bounds:", bounds )
 
+    if args.weight_map:
+        with open( args.weight_map, 'r') as file:
+            data = json.load( file )
+        map_cell_values( original_mesh, mesh, data[ "weights" ] )
 
     box = vtk.vtkBoundingBox()
     box.SetBounds( bounds )
@@ -190,7 +249,8 @@ def add_args( parser ):
     parser.add_argument( "-n", "--number_of_samples", help="number of samples", type= int, default = 500000 )
     parser.add_argument( "--near", dest= "nearRatio", help="near surface sampling ratio", type = float, default = 47.0 / 50.0 )
     parser.add_argument( "--dilation", help="dilation ratio unit box", type= float, default = 0.05 )
-    parser.add_argument( "-v", "--variance", dest= "variance", help="variance", type= float, default = 0.0025 )
+    parser.add_argument( "-v", "--variance", help="variance", type= float, default = 0.0025 )
+    parser.add_argument( "-w", "--weight_map", help="wreight map file" )
     parser.add_argument( "-seed", help="random seed", type= int, default = 666 )
     parser.add_argument( "-s", "--scale", help="distance scale", default = 1, type = float )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )

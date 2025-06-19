@@ -56,6 +56,16 @@ def add_args( arg_parser ):
         type=int,
         default=8000
     )
+    arg_parser.add_argument(
+        "--intersect",
+        help="reconstruct only names contained in json split file"
+    )
+    arg_parser.add_argument(
+        "--intersect_trim",
+        help="number of characters to trim from file name before checking for intersection",
+        type=int,
+        default=4
+    )
 
     deep_sdf.add_common_args(arg_parser)
 
@@ -156,10 +166,20 @@ if __name__ == "__main__":
     specs, decoder = init(args)
     logging.debug("loading {}".format(args.npz))
     files=[]
+    to_intersect = False
+    if args.intersect:
+        to_intersect = {}
+        with open(args.intersect, 'r') as f:
+            data = json.load(f)
+            for key in data.keys():
+                for key2 in data[ key ].keys():
+                    for name in data[ key ][ key2 ]:
+                        to_intersect[ name ] = True
 
     if os.path.isdir( args.npz ):
         for file in sorted( os.listdir( args.npz ) ):
             if not file.endswith( ".npz" ) : continue
+            if to_intersect and file[ : -( 4 + args.intersect_trim ) ] not in to_intersect: continue
             files.append( [ os.path.join( args.npz, file ), file[ : -4 ] ] )
     else:
 	    files.append( [ args.npz, "mesh" ] )

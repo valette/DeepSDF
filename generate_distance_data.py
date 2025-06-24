@@ -72,7 +72,7 @@ def addSurfacePoints( mesh, points, nCells, numberOfPoints, variance, secondVari
         points.InsertNextPoint( v2[ 0 ], v2[ 1 ], v2[ 2 ] )
         points.InsertNextPoint( v3[ 0 ], v3[ 1 ], v3[ 2 ] )
 
-def map_cell_values( mesh1, mesh2, weight_map ):
+def map_cell_values( mesh1, mesh2, weight_map = None, gradation = 1):
     cell_centroids = vtk.vtkPoints()
 
     for i in range( mesh1.GetNumberOfCells() ):
@@ -110,9 +110,11 @@ def map_cell_values( mesh1, mesh2, weight_map ):
         distance = vtk.vtkMath.Distance2BetweenPoints( centroid, closest_centroid )
         cell_weight = 1
         if distance < 0.0001 :
+            cell_weight = math.pow( input_values.GetTuple( closest_centroid_id )[ 0 ], gradation )
             number_of_found_cells += 1
-            label = str( int( input_values.GetTuple( closest_centroid_id )[ 0 ] ) )
-            if label in weight_map : cell_weight = weight_map[ label ]
+            if weight_map:
+                label = str( int( value ) )
+                if label in weight_map : cell_weight = weight_map[ label ]
         output_values.SetValue( i, cell_weight )
 
     print( number_of_found_cells, "matching cells")
@@ -121,6 +123,7 @@ def generate( args, mesh ):
     start = time.time()
     random.seed( args.seed )
     cell_data = mesh.GetCellData().GetScalars()
+    print( mesh )
     if cell_data :
         original_mesh = vtk.vtkPolyData()
         original_mesh.DeepCopy( mesh )
@@ -183,7 +186,11 @@ def generate( args, mesh ):
     if args.weight_map:
         with open( args.weight_map, 'r') as file:
             data = json.load( file )
-        map_cell_values( original_mesh, mesh, data[ "weights" ] )
+        map_cell_values( original_mesh, mesh, weight_map = data[ "weights" ] )
+
+    if args.gradation:
+        map_cell_values( original_mesh, mesh, gradation = args.gradation )
+
 
     box = vtk.vtkBoundingBox()
     box.SetBounds( bounds )
@@ -251,6 +258,7 @@ def add_args( parser ):
     parser.add_argument( "--dilation", help="dilation ratio unit box", type= float, default = 0.05 )
     parser.add_argument( "-v", "--variance", help="variance", type= float, default = 0.0025 )
     parser.add_argument( "-w", "--weight_map", help="wreight map file" )
+    parser.add_argument( "-g", "--gradation", help="gradation factor", type = float )
     parser.add_argument( "-seed", help="random seed", type= int, default = 666 )
     parser.add_argument( "-s", "--scale", help="distance scale", default = 1, type = float )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )

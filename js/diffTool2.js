@@ -283,7 +283,7 @@ async function getMeshes( dir ) {
     if ( ! await desk.FileSystem.existsAsync( dir ) ) return files;
     await desk.FileSystem.traverseAsync( dir, file => {
 
-        for ( let extension of [ ".stl", ".ply" ] )
+        for ( let extension of [ ".vtp", ".stl", ".ply" ] )
             if ( file.toLowerCase().endsWith( extension ) ) {
                 const path = file.split( "/" );
                 let name = path.pop()

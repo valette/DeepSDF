@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser( description = 'train DeepSDF via qsub', format
 parser.add_argument( "-g", "--go", help = "really submit job", action="store_true" )
 parser.add_argument( "-s", "--specs",  dest = 'specs', help = "specs file", required = True )
 parser.add_argument( "-c", "--config", metavar=('parameter', 'value'), action='append', nargs=2, help = "specs parameters", default = [] )
+parser.add_argument( "-d", "--dataset", help = "shortcut to set Dataset directory, training set and test set" )
 parser.add_argument( "-r", "--job_root", help = "default root job dir", default = join( homeDir, name ) )
 parser.add_argument( "--resolution", help = "reconstruction resolution", type = int, default = 256 )
 parser.add_argument( "-l", "--supplementary_lines", action='append', help = "supplementary script lines", default = [] )
@@ -40,6 +41,25 @@ jobPath = join( job_root, jobId )
 
 with open( args.specs, 'r' ) as openfile:
 	specs = json.load( openfile )
+
+if args.dataset:
+    if not os.path.exists( args.dataset ):
+          print( "Error! : dataset directory does not exist: " + args.dataset )
+          exit( 1 )
+    dataset_dir = args.dataset
+    data_name = os.path.basename( os.path.normpath( dataset_dir ) )
+    args.config.append( ( "DataSource", dataset_dir ) )
+    train_split = os.path.join( dataset_dir, data_name + "_all_train.json" )
+    if ( not os.path.exists( train_split ) ):
+        print( "Error! : train split does not exist: " + train_split )
+        exit( 1 )
+
+    args.config.append( ( "TrainSplit", train_split ) )
+    test_split = os.path.join( dataset_dir, data_name + "_all_test.json" )
+    if ( not os.path.exists( test_split ) ):
+        print( "Error! : test split does not exist: " + test_split )
+        exit( 1 )
+    args.config.append( ( "TestSplit", test_split ) )
 
 for key, value in args.config:
 	if not key in specs:

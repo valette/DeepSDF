@@ -123,7 +123,6 @@ def generate( args, mesh ):
     start = time.time()
     random.seed( args.seed )
     cell_data = mesh.GetCellData().GetScalars()
-    print( mesh )
     if cell_data :
         original_mesh = vtk.vtkPolyData()
         original_mesh.DeepCopy( mesh )

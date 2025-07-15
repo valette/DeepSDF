@@ -337,11 +337,20 @@ async function preprocessMesh( mesh ) {
 
     if ( params.preprocess == "none" ) return mesh;
 
-    const preprocess = await desk.Actions.executeAsync( {
+    try {
+        const preprocess = await desk.Actions.executeAsync( {
         action : params.preprocess,
         inputMesh : mesh
-    } );
+        } );
 
-    return preprocess.outputMesh;
+        return preprocess.outputMesh;
+
+    } catch( e ) {
+
+        console.warn( "Error for model : " + mesh );
+
+    }
+
+    return mesh;
 
 }

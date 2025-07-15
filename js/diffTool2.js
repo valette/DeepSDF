@@ -19,6 +19,7 @@ const params = {
     wireframe : false,
     prependParentDir : false,
     maxLength : -1,
+    preprocess : "none",
     ...window?.DeepSDF?.diffTool2Params,
 };
 
@@ -164,7 +165,7 @@ list.addListener("changeSelection", async function (e) {
         viewer.removeAllMeshes();
         container.setEnabled( false );
         const label = selection[ 0 ].getLabel();
-        const originalMesh = database[ label ];
+        const originalMesh = await preprocessMesh( database[ label ] );
         const promises = [ viewer.addFileAsync( originalMesh ) ];
 
         promises.push( ...models.map( async model => {
@@ -186,7 +187,7 @@ list.addListener("changeSelection", async function (e) {
                 }
             }
 
-            const reconstruction = model.reconstructions[ label ];
+            const reconstruction = await preprocessMesh( model.reconstructions[ label ] );
             delete model.distances;
             if ( !reconstruction ) {
                 model.label.setValue( "Nothing here" );
@@ -312,8 +313,8 @@ async function computeAndDownloadAllDistances() {
 
         const promises = list.getChildren().map( async child => {
             const label = child.getLabel();
-            const original = database[ label ];
-            const reconstruction = model.reconstructions[ label ];
+            const original = await preprocessMesh( database[ label ] );
+            const reconstruction = await preprocessMesh( model.reconstructions[ label ] );
             if ( !reconstruction ) return [];
             const d1 = await ACVD.getAverageDistanceBetweenMeshes( original, reconstruction );
             const d2 = await ACVD.getAverageDistanceBetweenMeshes( reconstruction, original );
@@ -329,5 +330,18 @@ async function computeAndDownloadAllDistances() {
     downloadAllDistances.setLabel( "Download all distances" );
     const txt = data.map( l => l.join( "," ) ).join( "\n" );
     ACVD.downloadText( txt, "distances.csv" );
+
+}
+
+async function preprocessMesh( mesh ) {
+
+    if ( params.preprocess == "none" ) return mesh;
+
+    const preprocess = await desk.Actions.executeAsync( {
+        action : params.preprocess,
+        inputMesh : mesh
+    } );
+
+    return preprocess.outputMesh;
 
 }

@@ -10,6 +10,7 @@ start = time.time()
 parser = argparse.ArgumentParser( description = 'Generate split files', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
 parser.add_argument( dest= "directory", help="directory containing meshes" )
 parser.add_argument( "-r", dest= "trainRatio", help="ratio of training data", type= float, default = 0.9 )
+parser.add_argument( "-t", dest= "testSize", help="size of test dataset. Overrides trainRatio", type= int )
 args = parser.parse_args()
 
 
@@ -26,9 +27,14 @@ for f in os.listdir( path ) :
         if os.path.isfile( meshFile ) : names.append( f )
 
 random.shuffle( names )
-print( "Total : ", len( names ), "items" )
+dataset_size = len( names )
+print( "Total : ", dataset_size, "items" )
 
-trainSize = math.floor( args.trainRatio * len( names ) )
+trainSize = math.floor( args.trainRatio * dataset_size )
+if args.testSize is not None:
+    trainSize = dataset_size - args.testSize
+    print( "Test size set to ", args.testSize, "items" )
+
 s = [ "train", "test" ]
 arrays = [ names[ :trainSize ], names[ trainSize: ] ]
 

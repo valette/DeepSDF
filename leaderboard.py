@@ -57,7 +57,7 @@ parser.add_argument( "-hp", "--hide_parameters", action='append', help = "Hide j
 parser.add_argument( "-aj", "--all_job_parameters", action='store_true', help = "Show all job parameters" )
 
 args = parser.parse_args()
-job_root = join( home_dir, args.root_dir )
+job_root = os.path.realpath( args.root_dir )
 jobs = []
 join = os.path.join
 

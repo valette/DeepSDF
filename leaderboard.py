@@ -83,6 +83,8 @@ except Exception as e:
 
 
 for dir in tqdm( sorted( os.listdir( job_root ) ) ):
+    # skip if dir is not a number
+    if not dir.isdigit() : continue
     full_dir = join( job_root, dir )
     try:
         entry = {};
@@ -134,6 +136,9 @@ if args.list_values :
     values = {}
     for job in jobs:
         for field in job:
+            if not isinstance( field, dict ) : values[ field ] = True
+
+        for field in job[ "config" ]:
             if not isinstance( field, dict ) : values[ field ] = True
 
     print( "Available values" )

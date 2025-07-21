@@ -88,9 +88,12 @@ for dir in tqdm( sorted( os.listdir( job_root ) ) ):
         entry = {};
         entry[ "id" ] = int( dir )
 
+        for extension in [ "pbs", "slurm" ]:
+            if os.path.exists( join( full_dir, "job." + extension ) ):
+                job_file = join( full_dir, "job." + extension )
+                break
 
-        ext = "slurm" if jean_zay else "pbs"
-        with open( join( full_dir, "job." + ext ) ) as f:
+        with open( job_file ) as f:
             lines = f.read().split( "\n" )
             job_args = lines[ 1 ].split( "qsub.py " ).pop().split( "submit.py" ).pop()
             entry[ "full_job_args" ] = job_args

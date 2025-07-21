@@ -11,13 +11,17 @@ def main( args ):
     print( "Reading : ", args.pointsFile )
     data = np.load( args.pointsFile )
     print( data[ "scale" ])
-    pts = np.concatenate( ( data[ "pos" ], data[ "neg" ] ) )
+    if args.sign:
+        pts = data[ args.sign ]
+    else:
+        pts = np.concatenate( ( data[ "pos" ], data[ "neg" ] ) )
+
     scale = 1
     if "scale" in data :
         scale = data[ "scale" ]
         print( "Scale : ", scale )
         pts = pts / scale
-    if "offset" in data : 
+    if "offset" in data :
         offset = data[ "offset" ]
         print( "Offset : ", offset )
         offset = np.append( offset, 0 )
@@ -33,7 +37,7 @@ def main( args ):
 
     mesh = None
 
-    if args.mesh : 
+    if args.mesh :
         print( "Loading mesh : ", args.mesh )
         reader = vtk.vtkSTLReader()
         reader.SetFileName( args.mesh )
@@ -97,5 +101,6 @@ if __name__ == '__main__':
     parser.add_argument( "-c", "--meshColor", type = float, nargs = 3, default = [ 1, 0, 0 ], help = 'mesh color' )
     parser.add_argument( "-o", "--meshOpacity", type = float, default = 0.3, help = 'mesh opacity' )
     parser.add_argument( "-s", "--scale", dest= "scale", help="distance scale", default = 1, type = float )
+    parser.add_argument( "--sign", help="display only positive or negative distance samples", choices={"pos", "neg"} )
     args = parser.parse_args()
     main( args )

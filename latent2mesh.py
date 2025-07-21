@@ -10,6 +10,8 @@ import random
 import time
 import torch
 from reconstruct import reconstruct
+import nibabel as nib
+import numpy as np
 
 import deep_sdf
 import deep_sdf.workspace as ws
@@ -49,6 +51,15 @@ if __name__ == "__main__":
         "-csv",
         help="The csv file to reconstruct",
         required=True
+    )
+    arg_parser.add_argument(
+        "--saveSDF",
+        help="save the SDF as a nifty image",
+        action="store_true"
+    )
+    arg_parser.add_argument(
+        "--npz",
+        help="npz file to recover origin and scale from"
     )
 
     deep_sdf.add_common_args(arg_parser)
@@ -106,6 +117,25 @@ if __name__ == "__main__":
 
     start = time.time()
     with torch.no_grad():
-        deep_sdf.mesh.create_mesh(
+        values = deep_sdf.mesh.create_mesh(
             decoder, latent, "mesh", N=args.resolution, max_batch=int(2 ** 18) )
+
+        if args.saveSDF:
+            matrix = np.eye(4)
+            if args.npz:
+                npz = np.load(args.npz)
+                offset = 2 * npz['offset']
+                scale = npz['scale']
+            else:
+                offset = [-1, -1, -1]
+                scale = 2.0 / (args.resolution - 1)
+
+            matrix[:3, 3] = offset
+            matrix[:3, :3] = scale
+
+            # use nibabel to save the SDF as a nifty volume
+            values = values.cpu().numpy()
+            img = nib.Nifti1Image(values, matrix)
+            nib.save(img, "sdf.nii.gz")
+
     logging.debug("total time: {}".format(time.time() - start))

@@ -13,13 +13,6 @@ parser.add_argument( "-f", "--fix", help="remove missing items", action="store_t
 args = parser.parse_args()
 
 
-directory = os.path.dirname( os.path.normpath( args.split ) )
-arr = os.path.split( directory )
-name = arr[ -1 ]
-
-print( arr )
-print( directory)
-
 if not os.path.exists( args.split ):
     print( "Split file does not exist: %s" % args.split )
     exit( 1 )
@@ -30,6 +23,10 @@ with open( args.split, 'r' ) as f:
     except json.JSONDecodeError as e:
         print( "Error decoding JSON: %s" % e )
         exit( 1 )
+
+    directory = os.path.dirname( os.path.normpath( args.split ) )
+    name = list( split.keys()) [0]
+    print( "Dataset name :", name)
 
     items = split[ name ][ 'all' ]
     present_items = 0;

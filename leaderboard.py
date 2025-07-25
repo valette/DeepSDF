@@ -36,7 +36,6 @@ def get_parameter( cfg, parameter ):
 jean_zay = 'WORK' in os.environ
 join = os.path.join
 home_dir = os.environ[ 'WORK' if jean_zay else 'HOME' ]
-print( home_dir )
 gitDir = os.path.dirname( os.path.realpath(__file__) )
 
 to_hide= [ "-g" ]
@@ -80,6 +79,9 @@ try:
 except Exception as e:
     print( str( e ))
 
+if "loss" in args.value:
+    print( "yes")
+    import torch
 
 
 for dir in tqdm( sorted( os.listdir( job_root ) ) ):
@@ -118,6 +120,10 @@ for dir in tqdm( sorted( os.listdir( job_root ) ) ):
                     else : entry[ "gpu" ] = "none"
                     break
 
+        if "loss" in args.value:
+            pytorch_logs = torch.load( join( full_dir, "Logs.pth" ), map_location='cpu' )
+            entry[ "loss" ] = pytorch_logs[ "loss" ][ -1 ]
+
         jobs.append( entry )
 
     except Exception as e:
@@ -133,7 +139,7 @@ def getField( job, field, notFoundValue = 0 ):
         return value
 
 if args.list_values :
-    values = {}
+    values = { "loss" : True }
     for job in jobs:
         for field in job:
             if not isinstance( field, dict ) : values[ field ] = True

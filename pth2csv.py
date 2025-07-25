@@ -23,7 +23,7 @@ for root, dirs, files in os.walk( args.directory ):
         outputFile = os.path.splitext( outputFile )[0]+".csv"
         print( outputFile )
         code = torch.load( inputFile, map_location='cpu' ).squeeze().detach().numpy()
-        print( code )
+#        print( code )
         np.savetxt( outputFile, code, fmt="%f", newline=',' )
 #        pd.DataFrame( code ).to_csv( outputFile, index = False )
 

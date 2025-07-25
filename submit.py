@@ -16,6 +16,9 @@ git_dir = os.path.dirname( os.path.realpath(__file__) )
 parser = argparse.ArgumentParser( description = 'train DeepSDF via qsub or slurm', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
 parser.add_argument( "-d", "--dataset", help = "shortcut to set Dataset directory, training set and test set" )
 parser.add_argument( "-g", "--go", help = "really submit job", action="store_true" )
+parser.add_argument( "--write", help = "only write job files without submitting", action="store_true" )
+parser.add_argument( "-n", "--nodes", help = "qsub nodes", default = "1" )
+parser.add_argument( "--gpu", help = "gpu type", default = "24" )
 parser.add_argument( "-s", "--specs",  dest = 'specs', help = "specs file", required = True )
 parser.add_argument( "-c", "--config", metavar=('parameter', 'value'), action='append', nargs=2, help = "specs parameters", default = [] )
 parser.add_argument( "-r", "--job_root", help = "default root job dir", default = join( home_dir, name ) )
@@ -134,8 +137,8 @@ for line in args.supplementary_lines: add( line )
 print( "job.pbs : " )
 print( job )
 
-if not args.go :
-    print( "Job not submitted. Relaunch with option -g or --go to really submit job" )
+if not args.go and not args.write:
+    print( "Job neither written nor submitted. Relaunch with option --write to only write or --go to write and submit" )
     exit( 0 )
 
 os.mkdir( job_path )
@@ -150,6 +153,11 @@ writeFile( job_file, job )
 
 specsFile = join ( job_path, "specs.json" )
 with open( specsFile, "w") as outFile : outFile.write( specsTxt )
+print( "job file " + job_file + " written" )
+
+if not args.go:
+	print( "Job written but not submitted" )
+	exit( 0 )
 
 os.system( ( "sbatch" if jean_zay else "qsub" ) + " " + job_file )
 

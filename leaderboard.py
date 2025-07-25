@@ -51,7 +51,7 @@ parser.add_argument( "-csv", help = "write results to leaderboard.csv file", act
 parser.add_argument( "-l", "--job_args_length", help = "maximum display length for job args", type = int, default = 30 )
 parser.add_argument( "-lgpu", "--list_gpus", help = "list available machines and their respective gpu", action = "store_true" )
 parser.add_argument( "-lv", "--list_values", help = "list available values", action = "store_true" )
-parser.add_argument( "-r", "--root_dir", default = "DeepSDF" )
+parser.add_argument( "-r", "--root_dir", default = os.path.join( home_dir, "DeepSDF" ), help= "root directory for jobs", type = str )
 parser.add_argument( "-v", "--value", action='append', help = "Show extra values, e.g. " + ", ".join( possible_values ), default = [] )
 parser.add_argument( "-hp", "--hide_parameters", action='append', help = "Hide job parameters", default = to_hide )
 parser.add_argument( "-aj", "--all_job_parameters", action='store_true', help = "Show all job parameters" )

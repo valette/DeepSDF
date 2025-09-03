@@ -165,8 +165,15 @@ list.addListener("changeSelection", async function (e) {
         viewer.removeAllMeshes();
         container.setEnabled( false );
         const label = selection[ 0 ].getLabel();
-        const originalMesh = await preprocessMesh( database[ label ] );
-        const promises = [ viewer.addFileAsync( originalMesh ) ];
+        const originalMeshPromise = preprocessMesh( database[ label ] );
+        const promises = [ ];
+
+        promises.push( ( async function () {
+
+            referenceMesh = await viewer.addFileAsync( await originalMeshPromise  );
+            updateMeshView( referenceMesh, viewer );
+
+        } )() );
 
         promises.push( ...models.map( async model => {
             model.viewer.removeAllMeshes();
@@ -196,7 +203,7 @@ list.addListener("changeSelection", async function (e) {
 
             model.label.setValue( "Computing" );
             const distance = await ACVD.getDistanceBetweenMeshes(
-                reconstruction, originalMesh );
+                reconstruction, await originalMeshPromise );
             const colors = await ACVD.loadMeshWithColors( distance, params.maxDistance, { label : "reconstruction" } );
             const distances = colors.geometry.attributes.Distance;
             let max = 0, average = 0;
@@ -219,11 +226,9 @@ list.addListener("changeSelection", async function (e) {
         } ) );
 
         await Promise.all( promises );
-        referenceMesh = await promises[ 0 ];
-        updateMeshView( referenceMesh, viewer );
 
-    } catch( e ) {
-        console.warn( e );
+    } catch( error ) {
+        console.warn( error );
         
     } finally {
         container.setEnabled( true );
@@ -234,7 +239,7 @@ list.addListener("changeSelection", async function (e) {
 async function updateList() {
 try{
     list.removeAll();
-    listLabel.setValue( "0 reconstructions" )
+    listLabel.setValue( "0 reconstructions" );
     const promises = [ getMeshes( referenceDir.getValue() ) ];
 
     promises.push( ...models.map( async model => {
@@ -271,9 +276,9 @@ try{
     for ( let model of models ) model.viewer.removeAllMeshes();
     viewer.removeAllMeshes();
     if ( list.getChildren().length ) list.setSelection( [ list.getChildren()[ 0 ] ] );
-    listLabel.setValue( list.getChildren().length + " reconstructions:" )
+    listLabel.setValue( list.getChildren().length + " reconstructions:" );
 
-} catch( e ) {console.warn( e ) };
+} catch( e ) {console.warn( e ); }
 }
 
 updateModels().catch( console.warn );

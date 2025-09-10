@@ -198,6 +198,7 @@ def generate( args, mesh ):
     for i in range( 3 ) : offset[ i ] = - offset[ i ]
     print ( "Offset : ", offset )
     length = box.GetMaxLength()
+    if args.length : length = args.length
     print( "Max length: ", length )
     scale = 1 / ( length * 1.1 )
     meshPoints = mesh.GetPoints()
@@ -260,10 +261,11 @@ def add_args( parser ):
     parser.add_argument( "-g", "--gradation", help="gradation factor", type = float )
     parser.add_argument( "-seed", help="random seed", type= int, default = 666 )
     parser.add_argument( "-s", "--scale", help="distance scale", default = 1, type = float )
+    parser.add_argument( "--length", help="max length for normalization", type = float )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
     parser.add_argument( "-m", '--mesh', help = 'input mesh', required = True )
     parser.add_argument( "-b", '--boxMesh', help = 'input box mesh which will be used to compute bounding box' )
-    parser.add_argument( "-be", '--box_extension', help = 'input box mesh will be extended to reach expected dimensions', nargs='+', type = float )
+    parser.add_argument( "-be", '--box_extension', help = 'input box mesh will be extended to reach expected dimensions', nargs=6, type = float )
     parser.add_argument( "-t", '--test', help = 'use tighter sampling for test', action="store_true"  )
     parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )
 

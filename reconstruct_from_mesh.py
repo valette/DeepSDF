@@ -1,10 +1,9 @@
 import argparse
 import generate_distance_data
-import logging
 import os
 import reconstruct_single
 import torch
-import vtk
+from mesh_viewer import read_mesh, can_read_mesh
 
 parser = argparse.ArgumentParser( description = 'DeepSDF reconstruction from meshes', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
 
@@ -21,18 +20,17 @@ files = []
 if not os.path.exists( args.outputDir ) : os.mkdir( args.outputDir )
 
 if os.path.isdir( args.mesh ):
-	for file in sorted( os.listdir( args.mesh ) ):
-		if not file.endswith( ".stl" ) : continue
-		files.append( [ os.path.join( args.mesh, file ), os.path.join( args.outputDir, file[ : -4 ] ) ] )
+	dir = args.mesh
+	for file in sorted( os.listdir( dir ) ):
+		full_path = os.path.join( args.mesh, file )
+		if not can_read_mesh( full_path ) : continue
+		files.append( [ full_path, os.path.join( args.outputDir, os.path.splitext( os.path.basename( file ) )[0] ) ] )
 else:
 	files.append( [ args.mesh, "mesh" ] )
 
 for mesh, output in files:
 	print( "******** Mesh :", mesh )
-	reader = vtk.vtkSTLReader()
-	reader.SetFileName( mesh )
-	reader.Update()
-	mesh = reader.GetOutput()
+	mesh = read_mesh( mesh )
 	pos, neg, scale, offset = generate_distance_data.generate( args, mesh )
 	print( scale )
 	print( offset )

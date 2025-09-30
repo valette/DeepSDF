@@ -9,6 +9,7 @@ from pointsViewer import display
 import random
 import time
 import vtk
+from mesh_viewer import can_read_mesh, read_mesh
 
 def addRandomPoints( mesh, points, numberOfPoints ):
 
@@ -273,28 +274,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
     add_args( parser )
     parser.add_argument( "-o", dest = 'output', help = 'output distance file name' )
-#    import sys
-#    raise Warning( " ".join( sys.argv ) )
     args = parser.parse_args()
     files = []
 
     if os.path.isdir( args.mesh ):
         for file in sorted( os.listdir( args.mesh ) ):
-            if not file.endswith( ".stl" ) and not file.endswith( ".vtk" ): continue
+            if not can_read_mesh( file ) : continue
             mesh_file = os.path.join( args.mesh, file )
             output_npz = mesh_file.split( "/" ).pop()[ : -4 ] + ".npz"
             files.append( [ mesh_file , output_npz ] )
     else:
         files.append( [ args.mesh, args.output ] )
 
-    for mesh, output in files:
-        print( "Mesh :", mesh )
-        if mesh.endswith( ".stl" ) :
-            reader = vtk.vtkSTLReader()
-        else : reader = vtk.vtkXMLPolyDataReader()
-        reader.SetFileName( mesh )
-        reader.Update()
-        mesh = reader.GetOutput()
+    for input, output in files:
+        print( "Mesh :", input )
+        mesh = read_mesh( input )
         pos, neg, scale, offset = generate( args, mesh )
         if output :
             scale = np.array( scale, dtype = np.float32 )

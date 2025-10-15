@@ -130,25 +130,30 @@ def generate( args, mesh ):
 
     print( mesh.GetNumberOfPoints(), "vertices before processing" )
     print( mesh.GetNumberOfCells(), "triangles before processing" )
-    connectivity = vtk.vtkPolyDataConnectivityFilter()
-    connectivity.SetExtractionModeToLargestRegion()
-    connectivity.SetInputData( mesh )
-    holesFilling = vtk.vtkFillHolesFilter()
-    holesFilling.SetInputConnection( connectivity.GetOutputPort() )
-    holesFilling.SetHoleSize( 10 )
-    normals = vtk.vtkPolyDataNormals()
-    normals.ConsistencyOn()
-    normals.AutoOrientNormalsOn()
-    normals.SetInputConnection( holesFilling.GetOutputPort() )
-    normals.Update()
-    nCells = connectivity.GetOutput().GetNumberOfCells()
+    nCells = mesh.GetNumberOfCells()
 
-    print( connectivity.GetNumberOfExtractedRegions(), "connected components" )
-    print( nCells, "triangles after removing small connected components" )
-    print( connectivity.GetOutput().GetNumberOfPoints(), "vertices after removing small connected components" )
-    mesh = normals.GetOutput()
-    print( mesh.GetNumberOfCells(), "triangles after hole filling" )
-    print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
+    if not args.raw_mesh :
+        connectivity = vtk.vtkPolyDataConnectivityFilter()
+        connectivity.SetExtractionModeToLargestRegion()
+        connectivity.SetInputData( mesh )
+        holesFilling = vtk.vtkFillHolesFilter()
+        holesFilling.SetInputConnection( connectivity.GetOutputPort() )
+        holesFilling.SetHoleSize( 10 )
+        normals = vtk.vtkPolyDataNormals()
+        normals.ConsistencyOn()
+        normals.AutoOrientNormalsOn()
+        normals.SetInputConnection( holesFilling.GetOutputPort() )
+        normals.Update()
+        nCells = connectivity.GetOutput().GetNumberOfCells()
+
+        print( connectivity.GetNumberOfExtractedRegions(), "connected components" )
+        print( nCells, "triangles after removing small connected components" )
+        print( connectivity.GetOutput().GetNumberOfPoints(), "vertices after removing small connected components" )
+        mesh = normals.GetOutput()
+        print( mesh.GetNumberOfCells(), "triangles after hole filling" )
+        print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
+    else : print( "Use raw mesh without cleaning")
+
 
     variance = args.variance
     if args.test : variance = variance / 10
@@ -252,6 +257,7 @@ def generate( args, mesh ):
     if args.display : display( points, signedDistances, mesh, opacity=0.01 )
     return pos, neg, scale, offset
 
+
 def add_args( parser ):
     parser.add_argument( "-d", "--display", help="display result", action="store_true" )
     parser.add_argument( "-n", "--number_of_samples", help="number of samples", type= int, default = 500000 )
@@ -269,6 +275,7 @@ def add_args( parser ):
     parser.add_argument( "-be", '--box_extension', help = 'input box mesh will be extended to reach expected dimensions', nargs=6, type = float )
     parser.add_argument( "-t", '--test', help = 'use tighter sampling for test', action="store_true"  )
     parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )
+    parser.add_argument( "--raw", dest = 'raw_mesh', help = 'use raw mesh', action="store_true")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )

@@ -48,7 +48,6 @@ for dir in os.listdir( job_root ) :
 
 job_id = str( max_job_id + 1 )
 job_path = join( job_root, job_id )
-
 with open( args.specs, 'r' ) as openfile:
 	specs = json.load( openfile )
 
@@ -126,12 +125,6 @@ else:
 
 
 add( "cd " + job_path )
-add( "python " + trainExec + " -e ./" )
-add( "python " + reconstructExec + " -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TestSplit" ] + " --resolution " + str( args.resolution ) )
-add( "python " + reconstructExec + " --latent -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TrainSplit" ] )
-add( "python " + pth2csvExec + " Reconstructions CSV" )
-add( "zip -r csv.zip CSV" )
-
 for line in args.supplementary_lines: add( line )
 
 print( "job.pbs : " )

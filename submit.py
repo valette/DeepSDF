@@ -48,7 +48,10 @@ for dir in os.listdir( job_root ) :
 
 job_id = str( max_job_id + 1 )
 job_path = join( job_root, job_id )
+<<<<<<< HEAD
+=======
 
+>>>>>>> c05b6ee (allow to submit using slurm)
 with open( args.specs, 'r' ) as openfile:
 	specs = json.load( openfile )
 

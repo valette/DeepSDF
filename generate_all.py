@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser( description = 'Generate full dataset', formatt
 parser.add_argument( "input_directory", help="input directory" )
 parser.add_argument( "output_directory", help="output directory" )
 parser.add_argument( "--SDF_options", help="SDF computation options" )
+parser.add_argument( "--data_options", help="data collecting options" )
 parser.add_argument( "--split_options", help="split generation options" )
 parser.add_argument( "-s", "--step_start", help="start step in the process", choices = [ 0, 1, 2 ], default=0, type=int )
 parser.add_argument( "-p", "--processes", help="number of processes for SDF computation", default
@@ -26,7 +27,9 @@ output_dir = os.path.realpath( args.output_directory )
 out_meshes_dir = join( output_dir, "all" )
 
 if start <= 0:
-    os.system( f"python {join( git_dir, "generate_data_dirs.py" )} {input_dir} {out_meshes_dir}" )
+    data_args = [ "python", join( git_dir, "generate_data_dirs.py" ), input_dir, out_meshes_dir ]
+    if args.data_options : data_args.extend( args.data_options.split( " " ) )
+    os.system( " ".join( data_args ) )
 
 if start <= 1:
     os.chdir(output_dir)

@@ -5,6 +5,7 @@ import math
 import os
 import random
 import time
+from mesh_viewer import get_readable_mesh_formats
 
 start = time.time()
 parser = argparse.ArgumentParser( description = 'Generate split files', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
@@ -22,8 +23,8 @@ name2 = arr[ -1 ]
 names = []
 
 for f in os.listdir( path ) :
-    for ext in [ ".stl", ".vtp" ]:
-        meshFile = os.path.join( path, f, f + ext )
+    for ext in get_readable_mesh_formats():
+        meshFile = os.path.join( path, f, f + "." + ext )
         if os.path.isfile( meshFile ) : names.append( f )
 
 random.shuffle( names )

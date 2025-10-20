@@ -3,6 +3,9 @@
 import argparse
 import vtk
 
+def get_readable_mesh_formats():
+    return [ "stl", "ply", "obj", "vtp", "vtk" ]
+
 def get_mesh_reader( file ):
     extension = file.split( '.' )[ -1 ]
     if extension == "stl" :

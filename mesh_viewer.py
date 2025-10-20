@@ -3,22 +3,19 @@
 import argparse
 import vtk
 
+mesh_formats = {
+    'stl' : vtk.vtkSTLReader,
+    'ply' : vtk.vtkPLYReader,
+    'obj' : vtk.vtkOBJReader,
+    'vtp' : vtk.vtkXMLPolyDataReader,
+    'vtk' : vtk.vtkPolyDataReader
+}
+
 def get_readable_mesh_formats():
-    return [ "stl", "ply", "obj", "vtp", "vtk" ]
+    return mesh_formats.keys()
 
 def get_mesh_reader( file ):
-    extension = file.split( '.' )[ -1 ]
-    if extension == "stl" :
-        return vtk.vtkSTLReader
-    if extension == "ply" :
-        return vtk.vtkPLYReader
-    if extension == "obj" :
-        return vtk.vtkOBJReader
-    if extension == "vtp" :
-        return vtk.vtkXMLPolyDataReader
-    if extension == "vtk" :
-        return vtk.vtkPolyDataReader
-    return None
+    return mesh_formats.get( file.split( '.' )[ -1 ], None )
 
 def read_mesh( file ):
     reader_class = get_mesh_reader( file )
@@ -52,11 +49,9 @@ def render_mesh( mesh ) :
     interactor.Start()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser( description = 'NPZ Points viewer', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
+    parser = argparse.ArgumentParser( description = 'Mesh viewer', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
     parser.add_argument( "mesh", help = 'input mesh' )
     args = parser.parse_args()
-    if not can_read_mesh( args.mesh ) :
-        raise ValueError("Unsupported mesh format", args.mesh )
     mesh = read_mesh( args.mesh )
     render_mesh( mesh )
 

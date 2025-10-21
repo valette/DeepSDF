@@ -145,11 +145,18 @@ def generate( args, mesh ):
         normals.SetInputConnection( holesFilling.GetOutputPort() )
         normals.Update()
         nCells = connectivity.GetOutput().GetNumberOfCells()
-
         print( connectivity.GetNumberOfExtractedRegions(), "connected components" )
         print( nCells, "triangles after removing small connected components" )
         print( connectivity.GetOutput().GetNumberOfPoints(), "vertices after removing small connected components" )
         mesh = normals.GetOutput()
+        print( mesh.GetNumberOfCells(), "triangles after hole filling" )
+        print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
+    elif args.fill_holes :
+        holesFilling = vtk.vtkFillHolesFilter()
+        holesFilling.SetInputData( mesh )
+        holesFilling.SetHoleSize( 10 )
+        holesFilling.Update()
+        mesh = holesFilling.GetOutput()
         print( mesh.GetNumberOfCells(), "triangles after hole filling" )
         print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
     else : print( "Use raw mesh without cleaning")
@@ -276,6 +283,7 @@ def add_args( parser ):
     parser.add_argument( "-t", '--test', help = 'use tighter sampling for test', action="store_true"  )
     parser.add_argument( "--ymin", dest = 'yMin', help = 'remove points with y lower than threshold', type = float, default = -1000000 )
     parser.add_argument( "--raw", dest = 'raw_mesh', help = 'use raw mesh', action="store_true")
+    parser.add_argument( "--fill_holes", help = 'fill holes in mesh', action="store_true")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser( description = 'Distances computation', formatter_class=argparse.ArgumentDefaultsHelpFormatter )

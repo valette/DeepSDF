@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser( description = 'Generate data dirs', formatter_
 parser.add_argument( dest= "directory", help="directory containing meshes" )
 parser.add_argument( dest= "output_dir", help="output directory" )
 parser.add_argument( "--allowed", help="allowed extensions", action = 'append', default = [] )
-parser.add_argument( "--depth", help="recursion depth", type = int )
+parser.add_argument( "--depth", help="recursion depth", type = int, default = -1 )
 args = parser.parse_args()
 print( args )
 

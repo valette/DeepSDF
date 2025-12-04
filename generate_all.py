@@ -45,11 +45,11 @@ if start <= 2:
 
     sdf_args = [ "python", join( git_dir, "preprocess_data.py" ), "-d", output_dir, "-s", output_dir, "--preprocessMeshPath", join( git_dir, "generate_distance_data.py" ), "--threads", str( args.processes ) ]
     if args.SDF_options : sdf_args.extend( [ "--SDF_options", "'" + args.SDF_options + "'" ] )
-    sdf_args.extend( [ "--split", test_split ] )
+    sdf_args.extend( [ "--split", train_split ] )
     print( " ".join( sdf_args ) )
     os.system( " ".join( sdf_args ) )
 
-    sdf_args[ -1 ] = train_split
+    sdf_args[ -1 ] = test_split
     sdf_args.extend( [ "--test" ] )
     os.system( " ".join( sdf_args ) )
 

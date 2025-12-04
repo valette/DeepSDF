@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 import time
-from mesh_viewer import can_read_mesh
+from mesh_viewer import can_read_mesh, convert_to_ply
 
 start = time.time()
 parser = argparse.ArgumentParser( description = 'Generate data dirs', formatter_class=argparse.ArgumentDefaultsHelpFormatter )
@@ -12,6 +12,7 @@ parser.add_argument( dest= "directory", help="directory containing meshes" )
 parser.add_argument( dest= "output_dir", help="output directory" )
 parser.add_argument( "--allowed", help="allowed extensions", action = 'append', default = [] )
 parser.add_argument( "--depth", help="recursion depth", type = int, default = -1 )
+parser.add_argument( "--to_ply", help="if used, .stl files are converted to .ply", action='store_true' )
 args = parser.parse_args()
 print( args )
 
@@ -42,8 +43,12 @@ for root, dirs, files in os.walk( args.directory ):
         arr = f.split( "." )
         newDir = os.path.join( output_dir, "_".join( ".".join( arr[ :-1 ] ).split( " " ) ) )
         if not os.path.exists( newDir ) : os.makedirs( newDir )
-        outputFile = "_".join( os.path.join( newDir, ".".join( arr ) ).split( " " ) )
-        shutil.copyfile( inputFile, outputFile )
+        if  args.to_ply and arr[1] != 'ply':
+            outputFile = "_".join( os.path.join( newDir, ".".join( arr[ :-1 ] ) + ".ply" ).split( " " ) )
+            convert_to_ply(inputFile, outputFile)
+        else:
+            outputFile = "_".join( os.path.join( newDir, ".".join( arr ) ).split( " " ) )
+            shutil.copyfile( inputFile, outputFile )
         print( inputFile )
         print( newDir )
 

@@ -29,6 +29,12 @@ def can_read_mesh( file ):
     reader_class = get_mesh_reader( file )
     return reader_class is not None
 
+def convert_to_ply( inputFile , outputFile ):
+    mesh = read_mesh( inputFile )
+    writer = vtk.vtkPLYWriter()
+    writer.SetInputData( mesh )
+    writer.SetFileName( outputFile )
+    writer.Update()
 
 def render_mesh( mesh ) :
     mapper = vtk.vtkPolyDataMapper()

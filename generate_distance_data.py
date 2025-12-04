@@ -134,7 +134,8 @@ def generate( args, mesh ):
 
     if not args.raw_mesh :
         connectivity = vtk.vtkPolyDataConnectivityFilter()
-        connectivity.SetExtractionModeToLargestRegion()
+        connectivity.SetExtractionModeToAllRegions()
+        # connectivity.SetExtractionModeToLargestRegion()
         connectivity.SetInputData( mesh )
         holesFilling = vtk.vtkFillHolesFilter()
         holesFilling.SetInputConnection( connectivity.GetOutputPort() )
@@ -161,6 +162,12 @@ def generate( args, mesh ):
         print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
     else : print( "Use raw mesh without cleaning")
 
+    # writer = vtk.vtkPLYWriter()
+    # writer.SetInputData(mesh)
+    # # writer.SetFileName(args.mesh_paths[m][:-4]+'_not-rotate.stl')
+    # writer.SetFileName('/home/jouvencel/data/temp/test_cc.ply')
+    # writer.Update()
+    # exit(3)
 
     variance = args.variance
     if args.test : variance = variance / 10
@@ -169,10 +176,21 @@ def generate( args, mesh ):
     print( "Initial mesh bounds: ", bounds )
 
     if args.boxMesh:
-        reader2 = vtk.vtkSTLReader()
-        reader2.SetFileName( args.boxMesh )
-        reader2.Update()
-        bounds = reader2.GetOutput().GetBounds()
+        box_mesh = read_mesh( args.boxMesh )
+        if not args.raw_mesh :
+            connectivity = vtk.vtkPolyDataConnectivityFilter()
+            connectivity.SetExtractionModeToAllRegions()
+            connectivity.SetInputData( box_mesh )
+            holesFilling = vtk.vtkFillHolesFilter()
+            holesFilling.SetInputConnection( connectivity.GetOutputPort() )
+            holesFilling.SetHoleSize( 10 )
+            normals = vtk.vtkPolyDataNormals()
+            normals.ConsistencyOn()
+            normals.AutoOrientNormalsOn()
+            normals.SetInputConnection( holesFilling.GetOutputPort() )
+            normals.Update()
+            box_mesh = normals.GetOutput()
+        bounds = box_mesh.GetBounds()
         print( "Box mesh bounds:", bounds )
 
     if args.box_extension:
@@ -184,13 +202,14 @@ def generate( args, mesh ):
             i_min = index * 2
             diff = bounds[ i_max ] - bounds[ i_min ]
 
-            if box_extension[ i_min ] > diff :
-                bounds[ i_min ] -= box_extension[ i_min ] - diff
-                diff = bounds[ i_max ] - bounds[ i_min ]
+            if box_extension[ i_min ] < bounds[ i_min ] :
+                # bounds[ i_min ] -= box_extension[ i_min ] - diff
+                # diff = bounds[ i_max ] - bounds[ i_min ]
+                bounds[ i_min ] = box_extension[ i_min ]
                 extended = True
 
-            if box_extension[ i_max ] > diff :
-                bounds[ i_max ] += box_extension[ i_max ] - diff
+            if box_extension[ i_max ] > bounds[ i_max ] :
+                bounds[ i_max ] = box_extension[ i_max ]
                 extended = True
 
         if extended : print( "Extended bounds:", bounds )
@@ -222,6 +241,11 @@ def generate( args, mesh ):
 
     meshPoints.Modified()
     print( "Final mesh bounds: ", mesh.GetBounds() )
+    # writer = vtk.vtkPLYWriter()
+    # writer.SetInputData(mesh)
+    # writer.SetFileName('/home/jouvencel/data/temp/test_cc.ply')
+    # writer.Update()
+    # exit(3)
 
     points = vtk.vtkPoints()
     number_of_samples = args.number_of_samples

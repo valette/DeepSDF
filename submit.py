@@ -111,7 +111,7 @@ if jean_zay:
 	add( "module load git" )
 
 else:
-	add( "#PBS -l walltime=" + str( args.walltime ) + ":00:00" )
+	add( "#PBS -l walltime=5000:00:00" )
 	add( "#PBS -N " + name + "-" + job_id)
 	add( "#PBS -q gpu" )
 	add( "#PBS -l nodes=" + args.nodes + ":ppn=10:gpus=1:gpu" + str( args.gpu )  )
@@ -128,9 +128,9 @@ else:
 add( "cd " + job_path )
 add( "python " + trainExec + " -e ./" )
 add( "python " + reconstructExec + " -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TestSplit" ] + " --resolution " + str( args.resolution ) )
-# add( "python " + reconstructExec + " --latent -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TrainSplit" ] )
-# add( "python " + pth2csvExec + " Reconstructions CSV" )
-# add( "zip -r csv.zip CSV" )
+add( "python " + reconstructExec + " --latent -e ./ --data " + specs[ "DataSource" ] + " --split " + specs[ "TrainSplit" ] )
+add( "python " + pth2csvExec + " Reconstructions CSV" )
+add( "zip -r csv.zip CSV" )
 
 for line in args.supplementary_lines: add( line )
 

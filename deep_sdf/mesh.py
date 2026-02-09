@@ -12,7 +12,7 @@ import deep_sdf.utils
 
 
 def create_mesh(
-    decoder, latent_vec, filename, N=256, max_batch=32 ** 3, offset=None, scale=None, args=None
+    decoder, latent_vec, filename, N=256, max_batch=32 ** 3, offset=None, scale=None, args=None, n_label=1
 ):
     start = time.time()
     ply_filename = filename
@@ -26,7 +26,7 @@ def create_mesh(
     voxel_size = 2.0 / (N - 1)
 
     overall_index = torch.arange(0, N ** 3, 1, out=torch.LongTensor())
-    samples = torch.zeros(N ** 3, 4)
+    samples = torch.zeros(N ** 3, 3 + n_label)
 
     # transform first 3 columns
     # to be the x, y, z index
@@ -49,28 +49,42 @@ def create_mesh(
     while head < num_samples:
         sample_subset = samples[head : min(head + max_batch, num_samples), 0:3].to(device)
 
-        samples[head : min(head + max_batch, num_samples), 3] = (
-            deep_sdf.utils.decode_sdf(decoder, latent_vec, sample_subset)
-            .squeeze(1)
-            .detach()
-            .cpu()
-        )
+        if n_label > 1 :
+            samples[head : min(head + max_batch, num_samples), 3:] = (
+                deep_sdf.utils.decode_sdf(decoder, latent_vec, sample_subset)
+                .squeeze(1)
+                .detach()
+                .cpu()
+            )
+        else : 
+            samples[head : min(head + max_batch, num_samples), 3] = (
+                deep_sdf.utils.decode_sdf(decoder, latent_vec, sample_subset)
+                .squeeze(1)
+                .detach()
+                .cpu()
+            )
         head += max_batch
-
-    sdf_values = samples[:, 3]
-    sdf_values = sdf_values.reshape(N, N, N)
 
     end = time.time()
     print("sampling takes: %f" % (end - start))
 
-    convert_sdf_samples_to_ply(
-        sdf_values.data.cpu(),
-        voxel_origin,
-        voxel_size,
-        ply_filename + ".ply",
-        offset,
-        scale,
-    )
+    for l in range( n_label ) :
+        sdf_values = samples[:, 3 + l]
+        sdf_values = sdf_values.reshape(N, N, N)
+
+        if n_label > 1 :
+            ply_filename_ = ply_filename + "_" + str(l) 
+        else : 
+            ply_filename_ = ply_filename
+
+        convert_sdf_samples_to_ply(
+            sdf_values.data.cpu(),
+            voxel_origin,
+            voxel_size,
+            ply_filename_ + ".ply",
+            offset,
+            scale,
+        )
 
     return sdf_values
 

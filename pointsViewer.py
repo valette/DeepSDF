@@ -24,7 +24,9 @@ def main( args ):
     if "offset" in data :
         offset = data[ "offset" ]
         print( "Offset : ", offset )
-        offset = np.append( offset, 0 )
+        c = pts.shape[1] - offset.shape[0]
+        for i in range(c):
+            offset = np.append( offset, 0 )
         pts = pts - offset
 
     points = vtk.vtkPoints()

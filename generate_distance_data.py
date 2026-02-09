@@ -11,7 +11,7 @@ import time
 import vtk
 from mesh_viewer import can_read_mesh, read_mesh
 
-def addRandomPoints( mesh, points, numberOfPoints ):
+def addRandomPoints( points, numberOfPoints ):
 
     for n in range( numberOfPoints ):
         x = random.random() - 0.5
@@ -120,115 +120,134 @@ def map_cell_values( mesh1, mesh2, weight_map = None, gradation = 1):
 
     print( number_of_found_cells, "matching cells")
 
-def generate( args, mesh ):
+def generate( args, l_mesh ):
     start = time.time()
     random.seed( args.seed )
-    cell_data = mesh.GetCellData().GetScalars()
-    if cell_data :
-        original_mesh = vtk.vtkPolyData()
-        original_mesh.DeepCopy( mesh )
-
-    print( mesh.GetNumberOfPoints(), "vertices before processing" )
-    print( mesh.GetNumberOfCells(), "triangles before processing" )
-    nCells = mesh.GetNumberOfCells()
-
-    if not args.raw_mesh :
-        connectivity = vtk.vtkPolyDataConnectivityFilter()
-        connectivity.SetExtractionModeToLargestRegion()
-        connectivity.SetInputData( mesh )
-        holesFilling = vtk.vtkFillHolesFilter()
-        holesFilling.SetInputConnection( connectivity.GetOutputPort() )
-        holesFilling.SetHoleSize( 10 )
-        normals = vtk.vtkPolyDataNormals()
-        normals.ConsistencyOn()
-        normals.AutoOrientNormalsOn()
-        normals.SetInputConnection( holesFilling.GetOutputPort() )
-        normals.Update()
-        nCells = connectivity.GetOutput().GetNumberOfCells()
-        print( connectivity.GetNumberOfExtractedRegions(), "connected components" )
-        print( nCells, "triangles after removing small connected components" )
-        print( connectivity.GetOutput().GetNumberOfPoints(), "vertices after removing small connected components" )
-        mesh = normals.GetOutput()
-        print( mesh.GetNumberOfCells(), "triangles after hole filling" )
-        print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
-    elif args.fill_holes :
-        holesFilling = vtk.vtkFillHolesFilter()
-        holesFilling.SetInputData( mesh )
-        holesFilling.SetHoleSize( 10 )
-        holesFilling.Update()
-        mesh = holesFilling.GetOutput()
-        print( mesh.GetNumberOfCells(), "triangles after hole filling" )
-        print( mesh.GetNumberOfPoints(), "vertices after hole filling" )
-    else : print( "Use raw mesh without cleaning")
-
-
-    variance = args.variance
-    if args.test : variance = variance / 10
-    secondVariance = variance / 10
-    bounds = mesh.GetBounds()
-    print( "Initial mesh bounds: ", bounds )
-
-    if args.boxMesh:
-        reader2 = vtk.vtkSTLReader()
-        reader2.SetFileName( args.boxMesh )
-        reader2.Update()
-        bounds = reader2.GetOutput().GetBounds()
-        print( "Box mesh bounds:", bounds )
-
-    if args.box_extension:
-        box_extension = args.box_extension
-        bounds = list( bounds )
-        extended = False
-        for index in range( 3 ):
-            i_max = 1 + index * 2
-            i_min = index * 2
-            diff = bounds[ i_max ] - bounds[ i_min ]
-
-            if box_extension[ i_min ] > diff :
-                bounds[ i_min ] -= box_extension[ i_min ] - diff
-                diff = bounds[ i_max ] - bounds[ i_min ]
-                extended = True
-
-            if box_extension[ i_max ] > diff :
-                bounds[ i_max ] += box_extension[ i_max ] - diff
-                extended = True
-
-        if extended : print( "Extended bounds:", bounds )
-
-    if args.weight_map:
-        with open( args.weight_map, 'r') as file:
-            data = json.load( file )
-        map_cell_values( original_mesh, mesh, weight_map = data[ "weights" ] )
-
-    if args.gradation:
-        map_cell_values( original_mesh, mesh, gradation = args.gradation )
-
-
-    box = vtk.vtkBoundingBox()
-    box.SetBounds( bounds )
-    offset = [ 0, 0, 0 ]
-    box.GetCenter( offset )
-    for i in range( 3 ) : offset[ i ] = - offset[ i ]
-    print ( "Offset : ", offset )
-    length = box.GetMaxLength()
-    if args.length : length = args.length
-    print( "Max length: ", length )
-    scale = 1 / ( length * 1.1 )
-    meshPoints = mesh.GetPoints()
-    for i in range( meshPoints.GetNumberOfPoints() ):
-        pt = list( meshPoints.GetPoint( i ) )
-        for j in range( 3 ) : pt[ j ] = scale * ( pt[ j ] + offset[ j ] )
-        meshPoints.SetPoint( i, pt )
-
-    meshPoints.Modified()
-    print( "Final mesh bounds: ", mesh.GetBounds() )
 
     points = vtk.vtkPoints()
-    number_of_samples = args.number_of_samples
-    numberOfNearSurfacePoints = round( args.nearRatio * number_of_samples )
-    addSurfacePoints( mesh, points, nCells, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
-    print( points.GetNumberOfPoints(), "near surface samples" )
-    addRandomPoints( mesh, points, number_of_samples - points.GetNumberOfPoints() )
+    for m, mesh in enumerate(l_mesh) :
+        cell_data = l_mesh[m].GetCellData().GetScalars()
+        if cell_data :
+            original_mesh = vtk.vtkPolyData()
+            original_mesh.DeepCopy( l_mesh[m] )
+
+        print( l_mesh[m].GetNumberOfPoints(), "vertices before processing" )
+        print( l_mesh[m].GetNumberOfCells(), "triangles before processing" )
+        nCells = l_mesh[m].GetNumberOfCells()
+
+        if not args.raw_mesh :
+            connectivity = vtk.vtkPolyDataConnectivityFilter()
+            # connectivity.SetExtractionModeToLargestRegion()
+            connectivity.SetExtractionModeToAllRegions()
+            connectivity.SetInputData( l_mesh[m] )
+            holesFilling = vtk.vtkFillHolesFilter()
+            holesFilling.SetInputConnection( connectivity.GetOutputPort() )
+            holesFilling.SetHoleSize( 10 )
+            normals = vtk.vtkPolyDataNormals()
+            normals.ConsistencyOn()
+            normals.AutoOrientNormalsOn()
+            normals.SetInputConnection( holesFilling.GetOutputPort() )
+            normals.Update()
+            nCells = connectivity.GetOutput().GetNumberOfCells()
+            print( connectivity.GetNumberOfExtractedRegions(), "connected components" )
+            print( nCells, "triangles after removing small connected components" )
+            print( connectivity.GetOutput().GetNumberOfPoints(), "vertices after removing small connected components" )
+            l_mesh[m] = normals.GetOutput()
+            print( l_mesh[m].GetNumberOfCells(), "triangles after hole filling" )
+            print( l_mesh[m].GetNumberOfPoints(), "vertices after hole filling" )
+        elif args.fill_holes :
+            holesFilling = vtk.vtkFillHolesFilter()
+            holesFilling.SetInputData( l_mesh[m] )
+            holesFilling.SetHoleSize( 10 )
+            holesFilling.Update()
+            l_mesh[m] = holesFilling.GetOutput()
+            print( l_mesh[m].GetNumberOfCells(), "triangles after hole filling" )
+            print( l_mesh[m].GetNumberOfPoints(), "vertices after hole filling" )
+        else : print( "Use raw mesh without cleaning")
+
+
+        variance = args.variance
+        if args.test : variance = variance / 10
+        secondVariance = variance / 10
+        bounds = l_mesh[m].GetBounds()
+        print( "Initial mesh bounds: ", bounds )
+
+        if args.boxMesh:
+            box_mesh = read_mesh( args.boxMesh )
+            if not args.raw_mesh :
+                connectivity = vtk.vtkPolyDataConnectivityFilter()
+                connectivity.SetExtractionModeToAllRegions()
+                connectivity.SetInputData( box_mesh )
+                holesFilling = vtk.vtkFillHolesFilter()
+                holesFilling.SetInputConnection( connectivity.GetOutputPort() )
+                holesFilling.SetHoleSize( 10 )
+                normals = vtk.vtkPolyDataNormals()
+                normals.ConsistencyOn()
+                normals.AutoOrientNormalsOn()
+                normals.SetInputConnection( holesFilling.GetOutputPort() )
+                normals.Update()
+                box_mesh = normals.GetOutput()
+            bounds = box_mesh.GetBounds()
+            print( "Box mesh bounds:", bounds )
+
+        if args.box_extension:
+            box_extension = args.box_extension
+            bounds = list( bounds )
+            extended = False
+            for index in range( 3 ):
+                i_max = 1 + index * 2
+                i_min = index * 2
+                diff = bounds[ i_max ] - bounds[ i_min ]
+
+                if box_extension[ i_min ] > diff :
+                    bounds[ i_min ] -= box_extension[ i_min ] - diff
+                    diff = bounds[ i_max ] - bounds[ i_min ]
+                    extended = True
+
+                if box_extension[ i_max ] > diff :
+                    bounds[ i_max ] += box_extension[ i_max ] - diff
+                    extended = True
+
+            if extended : print( "Extended bounds:", bounds )
+
+        if args.weight_map:
+            with open( args.weight_map, 'r') as file:
+                data = json.load( file )
+            map_cell_values( original_mesh, l_mesh[m], weight_map = data[ "weights" ] )
+
+        if args.gradation:
+            map_cell_values( original_mesh, l_mesh[m], gradation = args.gradation )
+
+
+        box = vtk.vtkBoundingBox()
+        box.SetBounds( bounds )
+        offset = [ 0, 0, 0 ]
+        box.GetCenter( offset )
+        for i in range( 3 ) : offset[ i ] = - offset[ i ]
+        print ( "Offset : ", offset )
+        length = box.GetMaxLength()
+        if args.length : length = args.length
+        print( "Max length: ", length )
+        scale = 1 / ( length * 1.1 )
+        meshPoints = l_mesh[m].GetPoints()
+        for i in range( meshPoints.GetNumberOfPoints() ):
+            pt = list( meshPoints.GetPoint( i ) )
+            for j in range( 3 ) : pt[ j ] = scale * ( pt[ j ] + offset[ j ] )
+            meshPoints.SetPoint( i, pt )
+
+        meshPoints.Modified()
+        print( "Final mesh bounds: ", l_mesh[m].GetBounds() )
+        # writer = vtk.vtkPLYWriter()
+        # writer.SetInputData(l_mesh[m])
+        # writer.SetFileName('/home/jouvencel/data/temp/test' + str(m) + '.ply')
+        # writer.Update()
+        # exit(3)
+        
+        number_of_samples = args.number_of_samples
+        numberOfNearSurfacePoints = round( args.nearRatio * number_of_samples ) / len(l_mesh)
+        addSurfacePoints( l_mesh[m], points, nCells, numberOfNearSurfacePoints, variance, secondVariance, args.normals )
+        print( points.GetNumberOfPoints(), "near surface samples" )
+    addRandomPoints( points, number_of_samples - points.GetNumberOfPoints() )
 
     print( points.GetNumberOfPoints(), "samples in total " )
     box = vtk.vtkBoundingBox()
@@ -238,30 +257,42 @@ def generate( args, mesh ):
     bounds = [ 0, 0, 0, 0, 0, 0 ]
     box.GetBounds(bounds)
     print( "Sample bounds : ", bounds )
-    implicitPolyDataDistance = vtk.vtkImplicitPolyDataDistance()
-    implicitPolyDataDistance.SetInput( mesh )
-    signedDistances = vtk.vtkFloatArray()
 
     pos = []
     neg = []
+    
+    l_implicitPolyDataDistance = []
+    l_signedDistances = []
+    for m in range (len(l_mesh)) :
+        implicitPolyDataDistance = vtk.vtkImplicitPolyDataDistance()
+        implicitPolyDataDistance.SetInput( l_mesh[m] )
+        l_implicitPolyDataDistance += [implicitPolyDataDistance]
+        l_signedDistances += [vtk.vtkFloatArray()]
 
     for pointId in range(points.GetNumberOfPoints()):
-        p = points.GetPoint(pointId)
-        signedDistance = implicitPolyDataDistance.EvaluateFunction(p) * args.scale
-        signedDistances.InsertNextValue(signedDistance)
-        if p[ 1 ] < args.yMin : continue
+        l_signedDistance = []
         sample = []
+        p = points.GetPoint(pointId)
+        for s in range(len(l_signedDistances)):
+            l_signedDistance += [l_implicitPolyDataDistance[s].EvaluateFunction(p) * args.scale]
+            l_signedDistances[s].InsertNextValue(l_signedDistance[s])
+        if p[ 1 ] < args.yMin : continue
         for j in range( 3 ): sample.append( p[ j ] );
-        sample.append(signedDistance);
-        arr = pos if signedDistance > 0 else neg
+        bool_neg = False
+        for s in range(len(l_signedDistances)):
+            sample.append(l_signedDistance[s]);
+            if l_signedDistance[s] <= 0 :
+                bool_neg = True
+        arr = neg if bool_neg else pos
         arr.append( sample )
-
-    print( "Distance range : ", signedDistances.GetRange() )
+    
+    for s in range(len(l_signedDistances)):
+        print( "Distance range : ", l_signedDistances[s].GetRange() )
     pos = np.array( pos, dtype=np.float32 )
     neg = np.array( neg, dtype=np.float32 )
     end = time.time()
     print( "SDF values computed in", int( end - start) , "seconds" )
-    if args.display : display( points, signedDistances, mesh, opacity=0.01 )
+    if args.display : display( points, l_signedDistances[0], l_mesh[0], opacity=0.01 )
     return pos, neg, scale, offset
 
 
@@ -277,7 +308,7 @@ def add_args( parser ):
     parser.add_argument( "-s", "--scale", help="distance scale", default = 1, type = float )
     parser.add_argument( "--length", help="max length for normalization", type = float )
     parser.add_argument( "-normals", dest= "normals", help="add noise with normals", action="store_true" )
-    parser.add_argument( "-m", '--mesh', help = 'input mesh', required = True )
+    parser.add_argument( "-m", '--mesh', help = 'input mesh', nargs='+', required = True )
     parser.add_argument( "-b", '--boxMesh', help = 'input box mesh which will be used to compute bounding box' )
     parser.add_argument( "-be", '--box_extension', help = 'input box mesh will be extended to reach expected dimensions', nargs=6, type = float )
     parser.add_argument( "-t", '--test', help = 'use tighter sampling for test', action="store_true"  )
@@ -292,7 +323,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     files = []
 
-    if os.path.isdir( args.mesh ):
+    if os.path.isdir( args.mesh[0] ): # à mettre à jour
         for file in sorted( os.listdir( args.mesh ) ):
             if not can_read_mesh( file ) : continue
             mesh_file = os.path.join( args.mesh, file )
@@ -302,9 +333,11 @@ if __name__ == '__main__':
         files.append( [ args.mesh, args.output ] )
 
     for input, output in files:
-        print( "Mesh :", input )
-        mesh = read_mesh( input )
-        pos, neg, scale, offset = generate( args, mesh )
+        l_mesh = []
+        for inp in input :
+            print( "Mesh :", input )
+            l_mesh += [read_mesh( inp )]
+        pos, neg, scale, offset = generate( args, l_mesh )
         if output :
             scale = np.array( scale, dtype = np.float32 )
             offset = np.array( offset, dtype = np.float32 )

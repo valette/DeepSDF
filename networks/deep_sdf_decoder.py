@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
-
 class Decoder(nn.Module):
     def __init__(
         self,
@@ -19,13 +18,14 @@ class Decoder(nn.Module):
         xyz_in_all=None,
         use_tanh=False,
         latent_dropout=False,
+        n_label=1,
     ):
         super(Decoder, self).__init__()
 
         def make_sequence():
             return []
 
-        dims = [latent_size + 3] + dims + [1]
+        dims = [latent_size + 3] + dims + [n_label]
 
         self.num_layers = len(dims)
         self.norm_layers = norm_layers

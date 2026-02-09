@@ -46,9 +46,10 @@ def filter_classes(patterns, classes):
 
 
 def process_mesh(mesh_filepath, target_filepath, executable, additional_args):
-    logging.info(mesh_filepath + " --> " + target_filepath)
-    command = [executable, "-m", mesh_filepath, "-o", target_filepath] + additional_args
+    logging.info(mesh_filepath[0] + " --> " + target_filepath)
+    command = [executable, "-m"] + mesh_filepath + [ "-o", target_filepath] + additional_args
     subproc = subprocess.Popen(command, stdout=subprocess.DEVNULL)
+    # subproc = subprocess.Popen(command)
     subproc.wait()
 
 
@@ -221,22 +222,32 @@ if __name__ == "__main__":
 
         for instance_dir in instance_dirs:
 
-            shape_dir = os.path.join(class_path, instance_dir)
+            shape_dirs = []
+            mesh_filenames = []
+            for inst in instance_dir.split(',') :
+                shape_dir = os.path.join(class_path, inst)
+                shape_dirs += [shape_dir]
+
+                try:
+                    mesh_filename = deep_sdf.data.find_mesh_in_directory(shape_dir)
+                    mesh_filenames += [mesh_filename]
+
+                except deep_sdf.data.NoMeshFileError:
+                    logging.warning("No mesh found for instance " + inst)
+                except deep_sdf.data.MultipleMeshFileError:
+                    logging.warning("Multiple meshes found for instance " + inst)
 
             processed_filepath = os.path.join(target_dir, instance_dir + extension)
             if args.skip and os.path.isfile(processed_filepath):
                 logging.debug("skipping " + processed_filepath)
                 continue
 
-            try:
-                mesh_filename = deep_sdf.data.find_mesh_in_directory(shape_dir)
+            specific_args = []
 
-                specific_args = []
-
-                if args.SDF_options:
-                    specific_args.extend( args.SDF_options.split( " " ) )
-
-                if args.surface_sampling:
+            if args.SDF_options:
+                specific_args.extend( args.SDF_options.split( " " ) )
+                
+            if args.surface_sampling:
                     normalization_param_target_dir = os.path.join(
                         normalization_param_dir, class_dir
                     )
@@ -248,19 +259,17 @@ if __name__ == "__main__":
                         normalization_param_target_dir, instance_dir + ".npz"
                     )
                     specific_args = ["-n", normalization_param_filename]
-
-                meshes_targets_and_specific_args.append(
+                
+            meshes_targets_and_specific_args.append(
                     (
-                        os.path.join(shape_dir, mesh_filename),
+                        [os.path.join(shape_dir, mesh_filename) 
+                         for shape_dir, mesh_filename in zip(shape_dirs, mesh_filenames)],
                         processed_filepath,
                         specific_args,
                     )
-                )
+            )
 
-            except deep_sdf.data.NoMeshFileError:
-                logging.warning("No mesh found for instance " + instance_dir)
-            except deep_sdf.data.MultipleMeshFileError:
-                logging.warning("Multiple meshes found for instance " + instance_dir)
+
 
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=int(args.num_threads)

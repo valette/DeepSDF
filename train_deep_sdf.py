@@ -320,6 +320,7 @@ def main_function(experiment_directory, continue_from, batch_split):
     minT = -clamp_dist
     maxT = clamp_dist
     enforce_minmax = True
+    n_label = specs["NetworkSpecs"]["n_label"]
 
     do_code_regularization = get_spec_with_default(specs, "CodeRegularization", True)
     code_reg_lambda = get_spec_with_default(specs, "CodeRegularizationLambda", 1e-4)
@@ -376,6 +377,8 @@ def main_function(experiment_directory, continue_from, batch_split):
     )
 
     loss_l1 = torch.nn.L1Loss(reduction="sum")
+    # if specs["NetworkSpecs"]["out_occ"] :
+    #     ce_loss = torch.nn.CrossEntropyLoss()
 
     optimizer_all = torch.optim.Adam(
         [
@@ -462,14 +465,17 @@ def main_function(experiment_directory, continue_from, batch_split):
         for sdf_data, indices in sdf_loader:
 
             # Process the input data
-            sdf_data = sdf_data.reshape(-1, 4)
+            sdf_data = sdf_data.reshape(-1, 3 + n_label )
 
             num_sdf_samples = sdf_data.shape[0]
 
             sdf_data.requires_grad = False
 
             xyz = sdf_data[:, 0:3]
-            sdf_gt = sdf_data[:, 3].unsqueeze(1)
+            if n_label == 1 :
+                sdf_gt = sdf_data[:, 3].unsqueeze(1)
+            else : 
+                sdf_gt = sdf_data[:, 3:]
 
             if enforce_minmax:
                 sdf_gt = torch.clamp(sdf_gt, minT, maxT)
@@ -494,6 +500,9 @@ def main_function(experiment_directory, continue_from, batch_split):
 
                 # NN optimization
                 pred_sdf = decoder(input)
+                # if specs["NetworkSpecs"]["out_occ"] :
+                #     pred_sdf = pred_sdf[:,:n_label]
+                #     pred_occ = pred_sdf[:,n_label:]
 
                 if enforce_minmax:
                     pred_sdf = torch.clamp(pred_sdf, minT, maxT)
@@ -507,6 +516,13 @@ def main_function(experiment_directory, continue_from, batch_split):
                     ) / num_sdf_samples
 
                     chunk_loss = chunk_loss + reg_loss.cuda()
+                
+                # if specs["NetworkSpecs"]["out_occ"] :
+                #     print(sdf_gt)
+                #     occ_gt = 1*(sdf_gt>0)
+                #     occ_loss = ce_loss(pred_occ, (occ_gt[i].cuda())) / num_sdf_samples
+                #     print(occ_loss)
+                #     exit(3)
 
                 chunk_loss.backward()
 
@@ -548,6 +564,9 @@ def main_function(experiment_directory, continue_from, batch_split):
                 param_mag_log,
                 epoch,
             )
+        
+        r = torch.cuda.memory_reserved(0)
+        logging.debug("memory used {} bytes".format(r))
 
 
 if __name__ == "__main__":

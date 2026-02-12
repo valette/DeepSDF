@@ -56,7 +56,10 @@ def reconstruct(
             test_sdf, num_samples
         ).to(device)
         xyz = sdf_data[:, 0:3]
-        sdf_gt = sdf_data[:, 3].unsqueeze(1)
+        if specs["NetworkSpecs"]["n_label"] == 1 :
+            sdf_gt = sdf_data[:, 3].unsqueeze(1)
+        else : 
+            sdf_gt = sdf_data[:, 3:]
 
         sdf_gt = torch.clamp(sdf_gt, -clamp_dist, clamp_dist)
 
@@ -301,7 +304,8 @@ if __name__ == "__main__":
                 start = time.time()
                 with torch.no_grad():
                     deep_sdf.mesh.create_mesh(
-                        decoder, latent, mesh_filename, N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale
+                        decoder, latent, mesh_filename, N=args.resolution, max_batch=int(2 ** 18), offset=offset, scale=scale, 
+                        n_label=specs["NetworkSpecs"]["n_label"]
                     )
                 logging.debug("total time: {}".format(time.time() - start))
 
